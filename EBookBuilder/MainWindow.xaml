@@ -1,0 +1,84 @@
+﻿<Window x:Class="lpubsppop01.EBookBuilder.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:lpubsppop01.EBookBuilder"
+        mc:Ignorable="d"
+        Title="EBookBuilder" Height="480" Width="900">
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="3"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Padding" Value="3,0"/>
+        </Style>
+        <Style TargetType="ListBox">
+            <Setter Property="Margin" Value="3"/>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="3" Name="pnlMain">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel></StackPanel>
+        <TextBlock Grid.Row="0" Grid.Column="0">Folder</TextBlock>
+        <DockPanel Grid.Row="0" Grid.Column="1">
+            <Button DockPanel.Dock="Right" Padding="3,0" Click="btnSelectTargetFolder_Click">...</Button>
+            <TextBox Text="{Binding TargetDirectoryPath}"/>
+        </DockPanel>
+        <TextBlock Grid.Row="1" Grid.Column="0">Check</TextBlock>
+        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+            <Button Click="btnCheckAll_Click">All</Button>
+            <Button Click="btnCheckOdd_Click">Odd</Button>
+            <Button Click="btnCheckEven_Click">Even</Button>
+        </StackPanel>
+        <TextBlock Grid.Row="2" Grid.Column="0">Uncheck</TextBlock>
+        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+            <Button Click="btnUncheckAll_Click">All</Button>
+            <Button Click="btnUncheckUpper_Click">Upper</Button>
+            <Button Click="btnUncheckLower_Click">Lower</Button>
+        </StackPanel>
+        <TextBlock Grid.Row="3" Grid.Column="0">Rotate</TextBlock>
+        <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal">
+            <Button Click="btnRotate90_Click">90°</Button>
+            <Button Click="btnRotate180_Click">180°</Button>
+            <Button Click="btnRotate270_Click">270°</Button>
+        </StackPanel>
+        <TextBlock Grid.Row="4" Grid.Column="0">Whole</TextBlock>
+        <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal">
+            <Button Click="btnRenameWithSN_Click">Rename with Serial Number</Button>
+            <Button Click="btnBuild_Click">Build...</Button>
+        </StackPanel>
+        <TextBlock Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2">Left click to check and right click to select.</TextBlock>
+        <ListBox Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Name="lstJPEGFileItems" ItemsSource="{Binding JPEGFileItems}"
+                 SelectionChanged="lstJPEGFileItems_SelectionChanged">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <CheckBox IsChecked="{Binding IsChecked}" Content="{Binding Filename}"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <GridSplitter Grid.Row="0" Grid.RowSpan="7" Grid.Column="2" Width="5" HorizontalAlignment="Center"/>
+        <Border Grid.Row="0" Grid.RowSpan="7" Grid.Column="3" Margin="3" BorderThickness="1" BorderBrush="Gray">
+            <Image Name="ctrlPreviewImage" Stretch="Uniform" />
+        </Border>
+    </Grid>
+</Window>
