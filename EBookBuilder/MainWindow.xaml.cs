@@ -64,8 +64,8 @@ namespace lpubsppop01.EBookBuilder
             int i = 0;
             foreach (var item in MainWorkData.Current.JPEGFileItems)
             {
-                bool odd = (i++ % 2 == 1);
-                if (!odd) continue;
+                bool indexIsEven = (i++ % 2 == 0);
+                if (!indexIsEven) continue;
                 item.IsChecked = true;
             }
         }
@@ -75,8 +75,8 @@ namespace lpubsppop01.EBookBuilder
             int i = 0;
             foreach (var item in MainWorkData.Current.JPEGFileItems)
             {
-                bool even = (i++ % 2 == 0);
-                if (!even) continue;
+                bool indexIsOdd = (i++ % 2 == 1);
+                if (!indexIsOdd) continue;
                 item.IsChecked = true;
             }
         }
