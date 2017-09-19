@@ -298,6 +298,10 @@ namespace lpubsppop01.EBookBuilder
             {
                 string tempDirName = Path.GetFileNameWithoutExtension(BuildWorkData.Current.OutputFilePath);
                 string tempDirPath = Path.Combine(Path.GetTempPath(), "lpubsppop01.EBookBuilder", tempDirName);
+                if (Directory.Exists(tempDirPath))
+                {
+                    Directory.Delete(tempDirPath, recursive: true);
+                }
                 Directory.CreateDirectory(tempDirPath);
                 for (int i = 0; i < targetItems.Length; ++i)
                 {
