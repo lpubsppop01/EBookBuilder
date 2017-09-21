@@ -31,6 +31,28 @@ namespace lpubsppop01.EBookBuilder
 
         #region Event Handlers
 
+        void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            Left = Properties.Settings.Default.MainWindow_Left;
+            Top = Properties.Settings.Default.MainWindow_Top;
+            Width = Properties.Settings.Default.MainWindow_Width;
+            Height = Properties.Settings.Default.MainWindow_Height;
+            WindowState = Properties.Settings.Default.MainWindow_WindowState;
+        }
+
+        void Window_Closed(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.MainWindow_Left = Left;
+            Properties.Settings.Default.MainWindow_Top = Top;
+            Properties.Settings.Default.MainWindow_Width = Width;
+            Properties.Settings.Default.MainWindow_Height = Height;
+            if (WindowState != WindowState.Minimized)
+            {
+                Properties.Settings.Default.MainWindow_WindowState = WindowState;
+            }
+            Properties.Settings.Default.Save();
+        }
+
         void WorkData_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == "TargetDirectoryPath")

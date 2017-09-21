@@ -4,8 +4,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:lpubsppop01.EBookBuilder"
-        mc:Ignorable="d"
-        Title="EBookBuilder" Height="480" Width="900">
+        mc:Ignorable="d" MinHeight="400" MinWidth="600"
+        Title="EBookBuilder" Height="480" Width="900"
+        Loaded="Window_Loaded" Closed="Window_Closed">
     <Window.Resources>
         <Style TargetType="TextBlock">
             <Setter Property="Margin" Value="3"/>
