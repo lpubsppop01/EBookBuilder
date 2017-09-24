@@ -1,10 +1,12 @@
 ﻿using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -211,23 +213,33 @@ namespace lpubsppop01.EBookBuilder
             // Rotate
             string targetDirPath = MainWorkData.Current.TargetDirectoryPath;
             var targetItems = MainWorkData.Current.JPEGFileItems.Where(i => i.IsChecked).ToArray();
-            var dialog = new ProgressDialog {
+            var dialog = new ProgressDialog
+            {
                 Owner = this,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner
             };
             dialog.ShowDialog((sender, e) =>
             {
-                for (int i = 0; i < targetItems.Length; ++i)
+                int doneCount = 0;
+                object doneCountLock = new object();
+                Parallel.ForEach(targetItems, (targetItem) =>
                 {
-                    int percentage = (int)Math.Floor((double)(i / targetItems.Length));
-                    string message = string.Format("[{0}/{1}] {2}", i + 1, targetItems.Length, targetItems[i].Filename);
-                    sender.ReportProgress(percentage, message);
-                    string inputFilePath = Path.Combine(targetDirPath, targetItems[i].Filename);
+                    lock (doneCountLock)
+                    {
+                        int percentage = (int)Math.Floor(((double)doneCount / targetItems.Length) * 100);
+                        string message = string.Format("{0} of {1} ({2}%) Rotated", doneCount, targetItems.Length, percentage);
+                        sender.ReportProgress(percentage, message);
+                    }
+                    string inputFilePath = Path.Combine(targetDirPath, targetItem.Filename);
                     string outputFilePath = Path.GetTempFileName();
                     JpegTran.Current.Rotate(inputFilePath, outputFilePath, rotDeg);
                     File.Delete(inputFilePath);
                     File.Move(outputFilePath, inputFilePath);
-                }
+                    lock (doneCountLock)
+                    {
+                        ++doneCount;
+                    }
+                });
             });
         }
 
@@ -245,8 +257,8 @@ namespace lpubsppop01.EBookBuilder
                 string filenameFormat = BuildFilenameFormat(targetItems.Length);
                 for (int i = targetItems.Length - 1; i >= 0; --i)
                 {
-                    int percentage = (int)Math.Floor((double)(i / targetItems.Length));
-                    string message = string.Format("[{0}/{1}] {2}", i + 1, targetItems.Length, targetItems[i].Filename);
+                    int percentage = (int)Math.Floor(((double)i / targetItems.Length) * 100);
+                    string message = string.Format("{0} or {1} ({2}%) Renamed", i + 1, targetItems.Length, percentage);
                     sender.ReportProgress(percentage, message);
                     string inputFilePath = Path.Combine(targetDirPath, targetItems[i].Filename);
                     string outputFilename = string.Format(filenameFormat, i);
@@ -325,20 +337,34 @@ namespace lpubsppop01.EBookBuilder
                     Directory.Delete(tempDirPath, recursive: true);
                 }
                 Directory.CreateDirectory(tempDirPath);
-                for (int i = 0; i < targetItems.Length; ++i)
+
+                int doneCount = 0;
+                object doneCountLock = new object();
+                Parallel.ForEach(targetItems, (targetItem) =>
                 {
-                    int percentage = (int)Math.Floor((double)(i / targetItems.Length) / 2);
-                    string message = string.Format("[1/2][{0}/{1}] {2}", i + 1, targetItems.Length, targetItems[i].Filename);
-                    sender.ReportProgress(percentage, message);
-                    string inputFilePath = Path.Combine(targetDirPath, targetItems[i].Filename);
-                    string tempFilePath = Path.Combine(tempDirPath, targetItems[i].Filename);
+                    lock (doneCountLock)
+                    {
+                        int percentage = (int)Math.Floor(((double)doneCount / targetItems.Length) * 100);
+                        string message = string.Format("{0} of {1} ({2}%) Resized", doneCount, targetItems.Length, percentage);
+                        sender.ReportProgress(percentage, message);
+                    }
+                    string inputFilePath = Path.Combine(targetDirPath, targetItem.Filename);
+                    string tempFilePath = Path.Combine(tempDirPath, targetItem.Filename);
                     string size = string.Format("{0}x{1}", BuildWorkData.Current.Width, BuildWorkData.Current.Height);
                     ImageMagick.Current.Resize(inputFilePath, tempFilePath, size);
-                }
+                    lock (doneCountLock)
+                    {
+                        ++doneCount;
+                    }
+                });
                 {
-                    int percentage = 50;
-                    string message = string.Format("[2/2] {0}", Path.GetFileName(BuildWorkData.Current.OutputFilePath));
+                    int percentage = 100;
+                    string message = string.Format("Creating {0}", Path.GetFileName(BuildWorkData.Current.OutputFilePath));
                     sender.ReportProgress(percentage, message);
+                    if (File.Exists(BuildWorkData.Current.OutputFilePath))
+                    {
+                        File.Delete(BuildWorkData.Current.OutputFilePath);
+                    }
                     ZipFile.CreateFromDirectory(tempDirPath, BuildWorkData.Current.OutputFilePath, CompressionLevel.NoCompression, includeBaseDirectory: false);
                 }
             }, this);
