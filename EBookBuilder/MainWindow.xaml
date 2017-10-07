@@ -31,6 +31,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -63,13 +64,20 @@
             <Button Click="btnRotate180_Click">180°</Button>
             <Button Click="btnRotate270_Click">270°</Button>
         </StackPanel>
-        <TextBlock Grid.Row="4" Grid.Column="0">Whole</TextBlock>
+        <TextBlock Grid.Row="4" Grid.Column="0">Single</TextBlock>
         <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal">
+            <Button Click="btnDuplicateToNext_Click">Duplicate to Next</Button>
+            <Button Click="btnDuplicateToLast_Click">Duplicate to Last</Button>
+            <Button Click="btnMoveToLast_Click">Move to Last</Button>
+            <Button Click="btnCrop_Click">Crop...</Button>
+        </StackPanel>
+        <TextBlock Grid.Row="5" Grid.Column="0">Whole</TextBlock>
+        <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal">
             <Button Click="btnRenameWithSN_Click">Rename with Serial Number</Button>
             <Button Click="btnBuild_Click">Build...</Button>
         </StackPanel>
-        <TextBlock Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2">Left click to check and right click to select.</TextBlock>
-        <ListBox Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Name="lstJPEGFileItems" ItemsSource="{Binding JPEGFileItems}"
+        <TextBlock Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2">Left click to check and right click to select.</TextBlock>
+        <ListBox Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Name="lstJPEGFileItems" ItemsSource="{Binding JPEGFileItems}"
                  SelectionChanged="lstJPEGFileItems_SelectionChanged">
             <ListBox.ItemTemplate>
                 <DataTemplate>
@@ -77,8 +85,8 @@
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <GridSplitter Grid.Row="0" Grid.RowSpan="7" Grid.Column="2" Width="5" HorizontalAlignment="Center"/>
-        <Border Grid.Row="0" Grid.RowSpan="7" Grid.Column="3" Margin="3" BorderThickness="1" BorderBrush="Gray">
+        <GridSplitter Grid.Row="0" Grid.RowSpan="8" Grid.Column="2" Width="5" HorizontalAlignment="Center"/>
+        <Border Grid.Row="0" Grid.RowSpan="8" Grid.Column="3" Margin="3" BorderThickness="1" BorderBrush="Gray">
             <Image Name="ctrlPreviewImage" Stretch="Uniform" />
         </Border>
     </Grid>

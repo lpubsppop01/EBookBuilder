@@ -153,6 +153,27 @@ namespace lpubsppop01.EBookBuilder
             UpdatePreviewImage();
         }
 
+        void btnDuplicateToNext_Click(object sender, RoutedEventArgs e)
+        {
+            Duplicate(toLast: false);
+        }
+
+        void btnDuplicateToLast_Click(object sender, RoutedEventArgs e)
+        {
+            Duplicate(toLast: true);
+        }
+
+        void btnMoveToLast_Click(object sender, RoutedEventArgs e)
+        {
+            MoveToLast();
+        }
+
+        void btnCrop_Click(object sender, RoutedEventArgs e)
+        {
+            // TODO
+            UpdatePreviewImage();
+        }
+
         void btnRenameWithSN_Click(object sender, RoutedEventArgs e)
         {
             RenameWithSerialNumber();
@@ -213,12 +234,7 @@ namespace lpubsppop01.EBookBuilder
             // Rotate
             string targetDirPath = MainWorkData.Current.TargetDirectoryPath;
             var targetItems = MainWorkData.Current.JPEGFileItems.Where(i => i.IsChecked).ToArray();
-            var dialog = new ProgressDialog
-            {
-                Owner = this,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            };
-            dialog.ShowDialog((sender, e) =>
+            ProgressDialog.ShowDialog((sender, e) =>
             {
                 int doneCount = 0;
                 object doneCountLock = new object();
@@ -240,28 +256,24 @@ namespace lpubsppop01.EBookBuilder
                         ++doneCount;
                     }
                 });
-            });
+            }, this);
         }
 
         void RenameWithSerialNumber()
         {
             string targetDirPath = MainWorkData.Current.TargetDirectoryPath;
             var targetItems = MainWorkData.Current.JPEGFileItems.ToArray();
-            var dialog = new ProgressDialog
-            {
-                Owner = this,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            };
-            dialog.ShowDialog((sender, e) =>
+            ProgressDialog.ShowDialog((sender, e) =>
             {
                 string filenameFormat = BuildFilenameFormat(targetItems.Length);
                 for (int i = targetItems.Length - 1; i >= 0; --i)
                 {
                     int percentage = (int)Math.Floor(((double)i / targetItems.Length) * 100);
-                    string message = string.Format("{0} or {1} ({2}%) Renamed", i + 1, targetItems.Length, percentage);
+                    string message = string.Format("{0} of {1} ({2}%) Renamed", i, targetItems.Length, percentage);
                     sender.ReportProgress(percentage, message);
                     string inputFilePath = Path.Combine(targetDirPath, targetItems[i].Filename);
                     string outputFilename = string.Format(filenameFormat, i);
+                    if (outputFilename == targetItems[i].Filename) continue;
                     string outputFilePath = Path.Combine(targetDirPath, outputFilename);
                     if (File.Exists(outputFilePath))
                     {
@@ -280,7 +292,7 @@ namespace lpubsppop01.EBookBuilder
                     File.Move(inputFilePath, outputFilePath);
                     targetItems[i].Filename = outputFilename;
                 }
-            });
+            }, this);
         }
 
         static string BuildFilenameFormat(int count)
@@ -302,6 +314,80 @@ namespace lpubsppop01.EBookBuilder
             return buf.ToString();
         }
 
+        void Duplicate(bool toLast)
+        {
+            // Check states
+            JPEGFileItem targetItem;
+            int targetItemIndex;
+            if (!CheckSingleActionIsEnabled("duplication", out targetItem, out targetItemIndex)) return;
+
+            // Duplicate
+            string targetDirPath = MainWorkData.Current.TargetDirectoryPath;
+            string srcFilePath = Path.Combine(targetDirPath, targetItem.Filename);
+            string copyFilename = "copy.jpg";
+            string copyFilePath = Path.Combine(targetDirPath, copyFilename);
+            File.Copy(srcFilePath, copyFilePath);
+            if (toLast)
+            {
+                MainWorkData.Current.JPEGFileItems.Add(new JPEGFileItem { Filename = copyFilename });
+            }
+            else
+            {
+                MainWorkData.Current.JPEGFileItems.Insert(targetItemIndex + 1, new JPEGFileItem { Filename = copyFilename });
+            }
+            RenameWithSerialNumber();
+        }
+
+        bool CheckSingleActionIsEnabled(string actionName, out JPEGFileItem targetItem, out int targetItemIndex)
+        {
+            targetItem = null;
+            targetItemIndex = 0;
+
+            // Check selection
+            {
+                var targetTuples = MainWorkData.Current.JPEGFileItems.Select((v, i) => new { Value = v, Index = i }).Where(t => t.Value.IsChecked).ToArray();
+                if (targetTuples.Length != 1)
+                {
+                    MessageBox.Show(string.Format("The number of selection must be one on {0}.", actionName));
+                    return false;
+                }
+                targetItem = targetTuples.First().Value;
+                targetItemIndex = targetTuples.First().Index;
+            }
+
+            // Check filenames are serial numbers
+            if (!FilenamesAreSerialNumbers)
+            {
+                MessageBox.Show("Filenames must be serial numbers.");
+                return false;
+            }
+            return true;
+        }
+
+        bool FilenamesAreSerialNumbers
+        {
+            get
+            {
+                var allItems = MainWorkData.Current.JPEGFileItems;
+                string filenameFormat = BuildFilenameFormat(MainWorkData.Current.JPEGFileItems.Count);
+                bool result = allItems.Select((v, i) => new { v, i }).All(t => t.v.Filename == string.Format(filenameFormat, t.i));
+                return result;
+            }
+        }
+
+        void MoveToLast()
+        {
+            // Check states
+            JPEGFileItem targetItem;
+            int targetItemIndex;
+            if (!CheckSingleActionIsEnabled("move", out targetItem, out targetItemIndex)) return;
+
+            // Move
+            MainWorkData.Current.JPEGFileItems.RemoveAt(targetItemIndex);
+            MainWorkData.Current.JPEGFileItems.Add(targetItem);
+            RenameWithSerialNumber();
+        }
+
         #endregion
 
         #region Build
@@ -312,6 +398,13 @@ namespace lpubsppop01.EBookBuilder
             if (!ImageMagick.Current.IsEnabled)
             {
                 MessageBox.Show("magick.exe is not found in PATH.");
+                return;
+            }
+
+            // Check filenames are serial numbers
+            if (!FilenamesAreSerialNumbers)
+            {
+                MessageBox.Show("Filenames must be serial numbers.");
                 return;
             }
 

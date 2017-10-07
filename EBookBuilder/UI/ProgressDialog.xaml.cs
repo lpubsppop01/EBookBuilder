@@ -22,7 +22,17 @@ namespace lpubsppop01.EBookBuilder
 
         #region ShowDialog
 
-        public void ShowDialog(Action<BackgroundWorker, DoWorkEventArgs> doWork)
+        public static void ShowDialog(Action<BackgroundWorker, DoWorkEventArgs> doWork, Window owner)
+        {
+            var dialog = new ProgressDialog
+            {
+                Owner = owner,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
+            };
+            dialog.ShowDialog(doWork);
+        }
+
+        void ShowDialog(Action<BackgroundWorker, DoWorkEventArgs> doWork)
         {
             var worker = new BackgroundWorker
             {
@@ -43,16 +53,6 @@ namespace lpubsppop01.EBookBuilder
             };
             worker.RunWorkerAsync();
             ShowDialog();
-        }
-
-        public static void ShowDialog(Action<BackgroundWorker, DoWorkEventArgs> doWork, Window owner)
-        {
-            var dialog = new ProgressDialog
-            {
-                Owner = owner,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            };
-            dialog.ShowDialog(doWork);
         }
 
         #endregion
