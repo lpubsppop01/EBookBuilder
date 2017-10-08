@@ -62,6 +62,11 @@ namespace lpubsppop01.EBookBuilder
             Execute(string.Format("-rotate {0} -copy all \"{1}\" \"{2}\"", rotDeg, inputFilePath, outputFilePath));
         }
 
+        public void Crop(string inputFilePath, string outputFilePath, int width, int height, int left, int top)
+        {
+            Execute(string.Format("-crop {0}x{1}+{2}+{3} -copy all \"{4}\" \"{5}\"", width, height, left, top, inputFilePath, outputFilePath));
+        }
+
         #endregion
     }
 }

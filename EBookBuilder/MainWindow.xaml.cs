@@ -168,9 +168,14 @@ namespace lpubsppop01.EBookBuilder
             MoveToLast();
         }
 
+        void btnDelete_Click(object sender, RoutedEventArgs e)
+        {
+            Delete();
+        }
+
         void btnCrop_Click(object sender, RoutedEventArgs e)
         {
-            // TODO
+            Crop();
             UpdatePreviewImage();
         }
 
@@ -361,6 +366,14 @@ namespace lpubsppop01.EBookBuilder
                 MessageBox.Show("Filenames must be serial numbers.");
                 return false;
             }
+
+            // Select target if not selected
+            var selectedItem = lstJPEGFileItems.SelectedValue as JPEGFileItem;
+            if (targetItem != selectedItem)
+            {
+                lstJPEGFileItems.SelectedValue = targetItem;
+                UpdatePreviewImage();
+            }
             return true;
         }
 
@@ -386,6 +399,56 @@ namespace lpubsppop01.EBookBuilder
             MainWorkData.Current.JPEGFileItems.RemoveAt(targetItemIndex);
             MainWorkData.Current.JPEGFileItems.Add(targetItem);
             RenameWithSerialNumber();
+        }
+
+        void Delete()
+        {
+            // Check states
+            JPEGFileItem targetItem;
+            int targetItemIndex;
+            if (!CheckSingleActionIsEnabled("delete", out targetItem, out targetItemIndex)) return;
+
+            // Confirm
+            if (MessageBox.Show("Do you really want to delete \"" + targetItem.Filename + "\"?") != MessageBoxResult.OK) return;
+
+            // Delete
+            MainWorkData.Current.JPEGFileItems.RemoveAt(targetItemIndex);
+            string targetPath = Path.Combine(MainWorkData.Current.TargetDirectoryPath, targetItem.Filename);
+            File.Delete(targetPath);
+        }
+
+        void Crop()
+        {
+            // Check states
+            JPEGFileItem targetItem;
+            int targetItemIndex;
+            if (!CheckSingleActionIsEnabled("crop", out targetItem, out targetItemIndex)) return;
+
+            // Crop
+            CropWorkData.Current.Top = CropWorkData.Current.Bottom = CropWorkData.Current.Left = CropWorkData.Current.Right = 0;
+            CropWorkData.Current.SourceImage = CropWorkData.Current.PreviewImage = ctrlPreviewImage.Source as WriteableBitmap;
+            var dialog = new CropDialog
+            {
+                DataContext = CropWorkData.Current,
+                Owner = this,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
+            };
+            if (dialog.ShowDialog() ?? false)
+            {
+                string targetDirPath = MainWorkData.Current.TargetDirectoryPath;
+                string inputFilePath = Path.Combine(targetDirPath, targetItem.Filename);
+                string outputFilePath = Path.GetTempFileName();
+                int x = CropWorkData.Current.Left;
+                int y = CropWorkData.Current.Top;
+                int width = CropWorkData.Current.SourceImage.PixelWidth - (CropWorkData.Current.Left + CropWorkData.Current.Right);
+                int height = CropWorkData.Current.SourceImage.PixelHeight - (CropWorkData.Current.Top + CropWorkData.Current.Bottom);
+                ProgressDialog.ShowDialog((sender, e) =>
+                {
+                    JpegTran.Current.Crop(inputFilePath, outputFilePath, width, height, x, y);
+                    File.Delete(inputFilePath);
+                    File.Move(outputFilePath, inputFilePath);
+                }, this);
+            }
         }
 
         #endregion

@@ -90,15 +90,23 @@
     <Compile Include="UI\BuildDialog.xaml.cs">
       <DependentUpon>BuildDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\CropDialog.xaml.cs">
+      <DependentUpon>CropDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="WorkData\BuildWorkData.cs" />
     <Compile Include="External\CommandFinder.cs" />
     <Compile Include="External\ImageMagick.cs" />
+    <Compile Include="WorkData\CropWorkData.cs" />
     <Compile Include="WorkData\JPEGFileItem.cs" />
     <Compile Include="External\JpegTran.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="UI\CropDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="UI\ProgressDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

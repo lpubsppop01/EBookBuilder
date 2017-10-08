@@ -32,7 +32,7 @@ namespace lpubsppop01.EBookBuilder
             }
         }
 
-        private void btnOK_Click(object sender, RoutedEventArgs e)
+        void btnOK_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = true;
         }

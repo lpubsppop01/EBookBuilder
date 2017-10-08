@@ -69,6 +69,7 @@
             <Button Click="btnDuplicateToNext_Click">Duplicate to Next</Button>
             <Button Click="btnDuplicateToLast_Click">Duplicate to Last</Button>
             <Button Click="btnMoveToLast_Click">Move to Last</Button>
+            <Button Click="btnDelete_Click">Delete</Button>
             <Button Click="btnCrop_Click">Crop...</Button>
         </StackPanel>
         <TextBlock Grid.Row="5" Grid.Column="0">Whole</TextBlock>
