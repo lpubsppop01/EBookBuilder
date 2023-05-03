@@ -68,7 +68,10 @@ namespace lpubsppop01.EBookBuilder
         {
             var dialog = new CommonOpenFileDialog("Select Target Folder");
             dialog.IsFolderPicker = true;
-            dialog.DefaultDirectory = MainWorkData.Current.TargetDirectoryPath;
+            if (Directory.Exists(MainWorkData.Current.TargetDirectoryPath))
+            {
+                dialog.DefaultDirectory = MainWorkData.Current.TargetDirectoryPath;
+            }
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 MainWorkData.Current.TargetDirectoryPath = dialog.FileName;
@@ -200,6 +203,8 @@ namespace lpubsppop01.EBookBuilder
 
         void UpdatePreviewImage()
         {
+            if (!Directory.Exists(MainWorkData.Current.TargetDirectoryPath)) return;
+
             var selectedItem = lstJPEGFileItems.SelectedValue as JPEGFileItem;
             if (selectedItem == null)
             {
@@ -229,6 +234,13 @@ namespace lpubsppop01.EBookBuilder
 
         void RotateCheckedJPEGFiles(string rotDeg)
         {
+            // Check that target directory exists
+            if (!Directory.Exists(MainWorkData.Current.TargetDirectoryPath))
+            {
+                MessageBox.Show("Target directory doesn't exist.");
+                return;
+            }
+
             // Check jpegtran.exe
             if (!JpegTran.Current.IsEnabled)
             {
@@ -266,6 +278,12 @@ namespace lpubsppop01.EBookBuilder
 
         void RenameWithSerialNumber()
         {
+            if (!Directory.Exists(MainWorkData.Current.TargetDirectoryPath))
+            {
+                MessageBox.Show("Target directory doesn't exist.");
+                return;
+            }
+
             string targetDirPath = MainWorkData.Current.TargetDirectoryPath;
             var targetItems = MainWorkData.Current.JPEGFileItems.ToArray();
             ProgressDialog.ShowDialog((sender, e) =>
@@ -321,6 +339,13 @@ namespace lpubsppop01.EBookBuilder
 
         void Duplicate(bool toLast)
         {
+            // Check that target directory exists
+            if (!Directory.Exists(MainWorkData.Current.TargetDirectoryPath))
+            {
+                MessageBox.Show("Target directory doesn't exist.");
+                return;
+            }
+
             // Check states
             JPEGFileItem targetItem;
             int targetItemIndex;
@@ -403,6 +428,13 @@ namespace lpubsppop01.EBookBuilder
 
         void Delete()
         {
+            // Check that target directory exists
+            if (!Directory.Exists(MainWorkData.Current.TargetDirectoryPath))
+            {
+                MessageBox.Show("Target directory doesn't exist.");
+                return;
+            }
+
             // Check states
             JPEGFileItem targetItem;
             int targetItemIndex;
@@ -419,6 +451,13 @@ namespace lpubsppop01.EBookBuilder
 
         void Crop()
         {
+            // Check that target directory exists
+            if (!Directory.Exists(MainWorkData.Current.TargetDirectoryPath))
+            {
+                MessageBox.Show("Target directory doesn't exist.");
+                return;
+            }
+
             // Check states
             JPEGFileItem targetItem;
             int targetItemIndex;
@@ -470,6 +509,14 @@ namespace lpubsppop01.EBookBuilder
                 MessageBox.Show("Filenames must be serial numbers.");
                 return;
             }
+
+            // Check that target directory exists
+            if (!Directory.Exists(MainWorkData.Current.TargetDirectoryPath))
+            {
+                MessageBox.Show("Target directory doesn't exist.");
+                return;
+            }
+
 
             // Show build dialog
             BuildWorkData.Current.OutputFilePath = MainWorkData.Current.TargetDirectoryPath + ".cbz";
