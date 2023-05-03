@@ -12,11 +12,11 @@ TODO
 
 ## Requirements
 - To use
-    - .NET Framework 4.6.1 or later
+    - .NET Framework 4.8.1 or later
     - JpegTran (jpegtran.exe)
     - ImageMagick (magick.exe)
 - To build
-    - Visual Studio 2017
+    - Visual Studio 2022
 
 ## Author
 [lpubsppop01](https://github.com/lpubsppop01)
