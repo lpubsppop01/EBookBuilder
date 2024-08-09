@@ -19,11 +19,18 @@ if (!(Test-Path -LiteralPath $workDirPath)) {
 }
 
 $srcBinDirPath = Join-Path $solutionDirPath "EBookBuilder\bin\Publish"
+Copy-Item (Join-Path $solutionDirPath "README.md") $workDirPath
 Copy-Item (Join-Path $srcBinDirPath "lpubsppop01.EBookBuilder.exe") $workDirPath
 Copy-Item (Join-Path $srcBinDirPath "lpubsppop01.EBookBuilder.exe.config") $workDirPath
 Copy-Item (Join-Path $srcBinDirPath "Microsoft.WindowsAPICodePack.dll") $workDirPath
 Copy-Item (Join-Path $srcBinDirPath "Microsoft.WindowsAPICodePack.Shell.dll") $workDirPath
 Copy-Item (Join-Path $srcBinDirPath "Microsoft.WindowsAPICodePack.ShellExtensions.dll") $workDirPath
+Copy-Item (Join-Path $srcBinDirPath "System.Buffers.dll") $workDirPath
+Copy-Item (Join-Path $srcBinDirPath "System.Diagnostics.DiagnosticSource.dll") $workDirPath
+Copy-Item (Join-Path $srcBinDirPath "System.Memory.dll") $workDirPath
+Copy-Item (Join-Path $srcBinDirPath "System.Numerics.Vectors.dll") $workDirPath
+Copy-Item (Join-Path $srcBinDirPath "System.Runtime.CompilerServices.Unsafe.dll") $workDirPath
+Copy-Item (Join-Path $srcBinDirPath "ExifLibrary.dll") $workDirPath
 
 $archiveFilename = $workDirName + ".zip"
 $archiveFilePath = Join-Path $solutionDirPath $archiveFilename

@@ -1,6 +1,6 @@
-﻿using Microsoft.WindowsAPICodePack.Dialogs;
+﻿using lpubsppop01.EBookBuilder.External;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
@@ -214,13 +214,8 @@ namespace lpubsppop01.EBookBuilder
             string path = Path.Combine(MainWorkData.Current.TargetDirectoryPath, selectedItem.Filename);
             try
             {
-                // Use WriteableBitmap to avoid lock file
-                WriteableBitmap bitmap;
-                using (var ms = new MemoryStream(File.ReadAllBytes(path)))
-                {
-                    bitmap = new WriteableBitmap(BitmapFrame.Create(ms));
-                }
-                ctrlPreviewImage.Source = bitmap;
+                var image = MyBitmapImageUtility.LoadWithoutLock(path);
+                ctrlPreviewImage.Source = image;
             }
             catch
             {
@@ -241,13 +236,6 @@ namespace lpubsppop01.EBookBuilder
                 return;
             }
 
-            // Check jpegtran.exe
-            if (!JpegTran.Current.IsEnabled)
-            {
-                MessageBox.Show("jpegtran.exe is not found in PATH.");
-                return;
-            }
-
             // Rotate
             string targetDirPath = MainWorkData.Current.TargetDirectoryPath;
             var targetItems = MainWorkData.Current.JPEGFileItems.Where(i => i.IsChecked).ToArray();
@@ -264,10 +252,9 @@ namespace lpubsppop01.EBookBuilder
                         sender.ReportProgress(percentage, message);
                     }
                     string inputFilePath = Path.Combine(targetDirPath, targetItem.Filename);
-                    string outputFilePath = Path.GetTempFileName();
-                    JpegTran.Current.Rotate(inputFilePath, outputFilePath, rotDeg);
-                    File.Delete(inputFilePath);
-                    File.Move(outputFilePath, inputFilePath);
+                    var orientation = MyExifOrientationUtility.Read(inputFilePath);
+                    var rotatedOrientation = orientation.Rotated(rotDeg);
+                    MyExifOrientationUtility.Write(inputFilePath, rotatedOrientation);
                     lock (doneCountLock)
                     {
                         ++doneCount;
@@ -465,7 +452,7 @@ namespace lpubsppop01.EBookBuilder
 
             // Crop
             CropWorkData.Current.Top = CropWorkData.Current.Bottom = CropWorkData.Current.Left = CropWorkData.Current.Right = 0;
-            CropWorkData.Current.SourceImage = CropWorkData.Current.PreviewImage = ctrlPreviewImage.Source as WriteableBitmap;
+            CropWorkData.Current.SourceImage = CropWorkData.Current.PreviewImage = ctrlPreviewImage.Source as BitmapImage;
             var dialog = new CropDialog
             {
                 DataContext = CropWorkData.Current,
@@ -483,7 +470,7 @@ namespace lpubsppop01.EBookBuilder
                 int height = CropWorkData.Current.SourceImage.PixelHeight - (CropWorkData.Current.Top + CropWorkData.Current.Bottom);
                 ProgressDialog.ShowDialog((sender, e) =>
                 {
-                    JpegTran.Current.Crop(inputFilePath, outputFilePath, width, height, x, y);
+                    MyBitmapImageUtility.Crop(inputFilePath, outputFilePath, width, height, x, y);
                     File.Delete(inputFilePath);
                     File.Move(outputFilePath, inputFilePath);
                 }, this);
@@ -496,13 +483,6 @@ namespace lpubsppop01.EBookBuilder
 
         void Build()
         {
-            // Check magick.exe
-            if (!ImageMagick.Current.IsEnabled)
-            {
-                MessageBox.Show("magick.exe is not found in PATH.");
-                return;
-            }
-
             // Check filenames are serial numbers
             if (!FilenamesAreSerialNumbers)
             {
@@ -553,8 +533,8 @@ namespace lpubsppop01.EBookBuilder
                     }
                     string inputFilePath = Path.Combine(targetDirPath, targetItem.Filename);
                     string tempFilePath = Path.Combine(tempDirPath, targetItem.Filename);
-                    string size = string.Format("{0}x{1}", BuildWorkData.Current.Width, BuildWorkData.Current.Height);
-                    ImageMagick.Current.Resize(inputFilePath, tempFilePath, size);
+                    MyBitmapImageUtility.Resize(inputFilePath, tempFilePath,
+                        BuildWorkData.Current.Width, BuildWorkData.Current.Height);
                     lock (doneCountLock)
                     {
                         ++doneCount;

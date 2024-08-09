@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
+﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
 namespace lpubsppop01.EBookBuilder
@@ -62,15 +57,15 @@ namespace lpubsppop01.EBookBuilder
             set { m_Right = value; OnPropertyChanged(); }
         }
 
-        WriteableBitmap m_PreviewImage;
-        public WriteableBitmap PreviewImage
+        BitmapImage m_PreviewImage;
+        public BitmapImage PreviewImage
         {
             get { return m_PreviewImage; }
             set { m_PreviewImage = value; OnPropertyChanged(); }
         }
 
-        WriteableBitmap m_SourceImage;
-        public WriteableBitmap SourceImage
+        BitmapImage m_SourceImage;
+        public BitmapImage SourceImage
         {
             get { return m_SourceImage; }
             set { m_SourceImage = value; OnPropertyChanged(); }
