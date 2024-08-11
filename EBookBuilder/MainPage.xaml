@@ -93,7 +93,7 @@
                       ItemsSource="{Binding JPEGFileItems}"
                       ItemSelected="lstJPEGFileItems_SelectionChanged">
                 <ListView.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate x:DataType="local:JPEGFileItem">
                         <ViewCell>
                             <Grid>
                                 <Grid.ColumnDefinitions>
