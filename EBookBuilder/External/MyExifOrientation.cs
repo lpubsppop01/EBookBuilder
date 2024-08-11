@@ -1,7 +1,6 @@
 ﻿using ExifLibrary;
-using System.Windows.Media.Imaging;
 
-namespace lpubsppop01.EBookBuilder.External
+namespace Lpubsppop01.EBookBuilder
 {
     enum MyExifOrientation
     {
@@ -68,44 +67,6 @@ namespace lpubsppop01.EBookBuilder.External
                     return Orientation.RotatedRight;
                 default:
                     return Orientation.Normal;
-            }
-        }
-
-        #endregion
-
-        #region Conversion from/to System.Windows.Media.Imaging.Rotation
-
-        public static MyExifOrientation ToMyExifOrientation(this Rotation rotation)
-        {
-            switch (rotation)
-            {
-                case Rotation.Rotate0:
-                    return MyExifOrientation.HorizontalNormal;
-                case Rotation.Rotate180:
-                    return MyExifOrientation.Rotate180;
-                case Rotation.Rotate90:
-                    return MyExifOrientation.Rotate90CW;
-                case Rotation.Rotate270:
-                    return MyExifOrientation.Rotate270CW;
-                default:
-                    return MyExifOrientation.HorizontalNormal;
-            }
-        }
-
-        public static Rotation ToRotation(this MyExifOrientation orientation)
-        {
-            switch (orientation)
-            {
-                case MyExifOrientation.HorizontalNormal:
-                    return Rotation.Rotate0;
-                case MyExifOrientation.Rotate180:
-                    return Rotation.Rotate180;
-                case MyExifOrientation.Rotate90CW:
-                    return Rotation.Rotate90;
-                case MyExifOrientation.Rotate270CW:
-                    return Rotation.Rotate270;
-                default:
-                    return Rotation.Rotate0;
             }
         }
 

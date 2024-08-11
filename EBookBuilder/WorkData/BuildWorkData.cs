@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace lpubsppop01.EBookBuilder
+namespace Lpubsppop01.EBookBuilder
 {
     class BuildWorkData : INotifyPropertyChanged
     {
@@ -11,7 +11,7 @@ namespace lpubsppop01.EBookBuilder
         {
         }
 
-        static BuildWorkData m_Current;
+        static BuildWorkData? m_Current;
         public static BuildWorkData Current
         {
             get
@@ -27,13 +27,6 @@ namespace lpubsppop01.EBookBuilder
         #endregion
 
         #region Properties
-
-        string m_OutputFilePath = "";
-        public string OutputFilePath
-        {
-            get { return m_OutputFilePath; }
-            set { m_OutputFilePath = value; OnPropertyChanged(); }
-        }
 
         int m_Width = 600;
         public int Width
@@ -53,7 +46,7 @@ namespace lpubsppop01.EBookBuilder
 
         #region INotifyPropertyChanged Members
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         protected void OnPropertyChanged([CallerMemberName] string propertyName = "")
         {

@@ -1,13 +1,13 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace lpubsppop01.EBookBuilder
+namespace Lpubsppop01.EBookBuilder
 {
     class JPEGFileItem : INotifyPropertyChanged
     {
         #region Properties
 
-        string m_Filename;
+        string m_Filename = "";
         public string Filename
         {
             get { return m_Filename; }
@@ -25,7 +25,7 @@ namespace lpubsppop01.EBookBuilder
 
         #region INotifyPropertyChanged Members
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         protected void OnPropertyChanged([CallerMemberName] string propertyName = "")
         {

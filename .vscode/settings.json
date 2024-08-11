@@ -1,0 +1,9 @@
+{
+    "dotnet.defaultSolution": "EBookBuilder.sln",
+    "cSpell.words": [
+        "Exif",
+        "MACCATALYST",
+        "Magick",
+        "Skia"
+    ]
+}

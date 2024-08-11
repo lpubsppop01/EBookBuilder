@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Lpubsppop01.EBookBuilder"
+             x:Class="Lpubsppop01.EBookBuilder.MainPage"
+             Shell.NavBarIsVisible="False">
+    <ContentPage.Resources>
+        <!-- Light colors -->
+        <Color x:Key="LightPrimaryColor">WhiteSmoke</Color>
+        <Color x:Key="LightSecondaryColor">Black</Color>
+
+        <!-- Dark colors -->
+        <Color x:Key="DarkPrimaryColor">Teal</Color>
+        <Color x:Key="DarkSecondaryColor">White</Color>
+
+        <!-- Styles -->
+        <Style TargetType="Label">
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="VerticalOptions" Value="Center"/>
+        </Style>
+        <Style TargetType="Entry">
+            <Setter Property="Margin" Value="3"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="BackgroundColor"
+                    Value="{AppThemeBinding Light={StaticResource LightPrimaryColor}, Dark={StaticResource DarkPrimaryColor}}"/>
+            <Setter Property="TextColor"
+                    Value="{AppThemeBinding Light={StaticResource LightSecondaryColor}, Dark={StaticResource DarkSecondaryColor}}"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Margin" Value="3"/>
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid Margin="3">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Label Grid.Row="0" Grid.Column="0" VerticalOptions="Center">Folder</Label>
+        <Grid Grid.Row="0" Grid.Column="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Entry Grid.Column="0" Text="{Binding TargetDirectoryPath}"/>
+            <Button Grid.Column="1" Clicked="btnSelectTargetFolder_Click" Text="..."/>
+        </Grid>
+        <Label Grid.Row="1" Grid.Column="0">Check</Label>
+        <StackLayout Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+            <Button Clicked="btnCheckAll_Click" Text="All"/>
+            <Button Clicked="btnCheckOdd_Click" Text="Odd"/>
+            <Button Clicked="btnCheckEven_Click" Text="Even"/>
+        </StackLayout>
+        <Label Grid.Row="2" Grid.Column="0">Uncheck</Label>
+        <StackLayout Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+            <Button Clicked="btnUncheckAll_Click" Text="All"/>
+            <Button Clicked="btnUncheckUpper_Click" Text="Upper"/>
+            <Button Clicked="btnUncheckLower_Click" Text="Lower"/>
+        </StackLayout>
+        <Label Grid.Row="3" Grid.Column="0">Rotate</Label>
+        <StackLayout Grid.Row="3" Grid.Column="1" Orientation="Horizontal">
+            <Button Clicked="btnRotate90_Click" Text="90°"/>
+            <Button Clicked="btnRotate180_Click" Text="180°"/>
+            <Button Clicked="btnRotate270_Click" Text="270°"/>
+        </StackLayout>
+        <Label Grid.Row="4" Grid.Column="0">Single</Label>
+        <StackLayout Grid.Row="4" Grid.Column="1" Orientation="Horizontal">
+            <Button Clicked="btnDuplicateToNext_Click" Text="Duplicate to Next"/>
+            <Button Clicked="btnDuplicateToLast_Click" Text="Duplicate to Last"/>
+            <Button Clicked="btnMoveToLast_Click" Text="Move to Last"/>
+            <Button Clicked="btnDelete_Click" Text="Delete"/>
+        </StackLayout>
+        <Label Grid.Row="5" Grid.Column="0">Whole</Label>
+        <StackLayout Grid.Row="5" Grid.Column="1" Orientation="Horizontal">
+            <Button Clicked="btnRenameWithSN_Click" Text="Rename with Serial Number"/>
+            <Button Clicked="btnBuild_Click" Text="Build..."/>
+        </StackLayout>
+        <Label Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2">Left click to check and right click to select.</Label>
+        <Border Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Margin="3" StrokeThickness="1">
+            <ListView x:Name="lstJPEGFileItems"
+                      ItemsSource="{Binding JPEGFileItems}"
+                      ItemSelected="lstJPEGFileItems_SelectionChanged">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <CheckBox Grid.Column="0" IsChecked="{Binding IsChecked}"/>
+                                <Label Grid.Column="1" Text="{Binding Filename}" VerticalOptions="Center"/>
+                            </Grid>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Border>
+        <Border Grid.Row="0" Grid.RowSpan="8" Grid.Column="3" Margin="3" StrokeThickness="1">
+            <Image x:Name="ctrlPreviewImage"/>
+        </Border>
+    </Grid>
+
+</ContentPage>

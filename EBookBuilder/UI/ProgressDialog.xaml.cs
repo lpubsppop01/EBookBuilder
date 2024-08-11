@@ -1,15 +1,13 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Threading;
-using System.Windows;
-using System.Windows.Threading;
 
-namespace lpubsppop01.EBookBuilder
+namespace Lpubsppop01.EBookBuilder
 {
     /// <summary>
-    /// Interaction logic for ProgressWindow.xaml
+    /// Interaction logic for ProgressDialog.xaml
     /// </summary>
-    public partial class ProgressDialog : Window
+    public partial class ProgressDialog : ContentPage
     {
         #region Constructor
 
@@ -22,37 +20,30 @@ namespace lpubsppop01.EBookBuilder
 
         #region ShowDialog
 
-        public static void ShowDialog(Action<BackgroundWorker, DoWorkEventArgs> doWork, Window owner)
+        public static void ShowDialog(Action<BackgroundWorker, DoWorkEventArgs> doWork, ContentPage owner)
         {
-            var dialog = new ProgressDialog
-            {
-                Owner = owner,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            };
-            dialog.ShowDialog(doWork);
+            var dialog = new ProgressDialog();
+            dialog.ShowDialogCore(doWork, owner);
         }
 
-        void ShowDialog(Action<BackgroundWorker, DoWorkEventArgs> doWork)
+        void ShowDialogCore(Action<BackgroundWorker, DoWorkEventArgs> doWork, ContentPage owner)
         {
             var worker = new BackgroundWorker
             {
                 WorkerReportsProgress = true
             };
             worker.DoWork += (sender, e) => doWork(worker, e);
-            worker.RunWorkerCompleted += (sender, e) =>
+            worker.RunWorkerCompleted += async (sender, e) =>
             {
-                Dispatcher.BeginInvoke(DispatcherPriority.Send, (SendOrPostCallback)delegate
-                {
-                    Close();
-                }, null);
+                await Navigation.PopModalAsync();
             };
             worker.ProgressChanged += (sender, e) =>
             {
-                string filename = (e.UserState is string) ? e.UserState as string : "";
+                var filename = e.UserState as string ?? "";
                 txtMessage.Text = filename;
             };
             worker.RunWorkerAsync();
-            ShowDialog();
+            owner.Navigation.PushModalAsync(this);
         }
 
         #endregion

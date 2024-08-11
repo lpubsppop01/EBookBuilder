@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
-namespace lpubsppop01.EBookBuilder
+namespace Lpubsppop01.EBookBuilder
 {
     class MainWorkData : INotifyPropertyChanged
     {
@@ -17,7 +17,7 @@ namespace lpubsppop01.EBookBuilder
             JPEGFileItems.CollectionChanged += JPEGFileItems_CollectionChanged;
         }
 
-        static MainWorkData m_Current;
+        static MainWorkData? m_Current;
         public static MainWorkData Current
         {
             get
@@ -51,7 +51,9 @@ namespace lpubsppop01.EBookBuilder
         {
             JPEGFileItems.Clear();
             if (!Directory.Exists(TargetDirectoryPath)) return;
-            foreach (var filePath in Directory.EnumerateFiles(TargetDirectoryPath))
+            var filePaths = Directory.EnumerateFiles(TargetDirectoryPath);
+            var sortedFilePaths = filePaths.OrderBy(filePath => filePath);
+            foreach (var filePath in sortedFilePaths)
             {
                 string filename = Path.GetFileName(filePath);
                 if (!Regex.IsMatch(filename, @".*\.(jpg|jpeg)$", RegexOptions.IgnoreCase)) continue;
@@ -63,7 +65,7 @@ namespace lpubsppop01.EBookBuilder
 
         #region Event Handlers
 
-        void JPEGFileItems_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        void JPEGFileItems_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             if (e.NewItems != null)
             {
@@ -82,7 +84,7 @@ namespace lpubsppop01.EBookBuilder
             }
         }
 
-        void item_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        void item_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             OnPropertyChanged("JPEGFileItems");
         }
@@ -91,7 +93,7 @@ namespace lpubsppop01.EBookBuilder
 
         #region INotifyPropertyChanged Members
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         protected void OnPropertyChanged([CallerMemberName] string propertyName = "")
         {

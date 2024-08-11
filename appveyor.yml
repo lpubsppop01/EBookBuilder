@@ -1,0 +1,11 @@
+version: 0.0.{build}
+image: Visual Studio 2022
+build_script:
+  - ps: dotnet publish -f net8.0-windows10.0.19041.0 -o EBookBuilder-win-x64 EBookBuilder\EBookBuilder.csproj
+  - ps: dotnet publish -f net8.0-maccatalyst -o EBookBuilder-osx-arm64 EBookBuilder/EBookBuilder.csproj
+after_build:
+  - 7z a EBookBuilder-win-x64.zip EBookBuilder-win-x64
+  - 7z a EBookBuilder-osx-arm64.zip EBookBuilder-osx-arm64
+artifacts:
+  - path: EBookBuilder-win-x64.zip
+  - path: EBookBuilder-osx-arm64.zip

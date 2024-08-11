@@ -1,12 +1,9 @@
-﻿using Microsoft.Win32;
-using System.Windows;
-
-namespace lpubsppop01.EBookBuilder
+﻿namespace Lpubsppop01.EBookBuilder
 {
     /// <summary>
     /// Interaction logic for BuildDialog.xaml
     /// </summary>
-    public partial class BuildDialog : Window
+    public partial class BuildDialog : ContentPage
     {
         #region Constructor
 
@@ -17,24 +14,22 @@ namespace lpubsppop01.EBookBuilder
 
         #endregion
 
+        #region Properties
+
+        public Action? OnOK { get; set; }
+
+        #endregion
+
         #region Event Handlers
 
-        void btnSelectOutputFilePath_Click(object sender, RoutedEventArgs e)
+        void OKButtonClicked(object sender, EventArgs e)
         {
-            var dialog = new SaveFileDialog();
-            dialog.FileName = System.IO.Path.GetFileName(txtOutputFilePath.Text);
-            dialog.InitialDirectory = System.IO.Path.GetDirectoryName(txtOutputFilePath.Text);
-            dialog.Filter = "Zip Archive (.zip)|*.zip|Comic Book Zip (.cbz)|*.cbz";
-            dialog.DefaultExt = ".cbz";
-            if (dialog.ShowDialog() ?? false)
-            {
-                txtOutputFilePath.Text = dialog.FileName;
-            }
+            OnOK?.Invoke();
         }
 
-        void btnOK_Click(object sender, RoutedEventArgs e)
+        void CancelButtonClicked(object sender, EventArgs e)
         {
-            DialogResult = true;
+            Navigation.PopModalAsync();
         }
 
         #endregion
