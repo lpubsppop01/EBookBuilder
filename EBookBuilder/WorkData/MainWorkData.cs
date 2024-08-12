@@ -41,7 +41,8 @@ namespace Lpubsppop01.EBookBuilder
             set { m_TargetDirectoryPath = value; OnPropertyChanged(); }
         }
 
-        public ObservableCollection<JPEGFileItem> JPEGFileItems { get; private set; } = new ObservableCollection<JPEGFileItem>();
+        public MyObservableCollection<JPEGFileItem> JPEGFileItems { get; private set; }
+            = new MyObservableCollection<JPEGFileItem>();
 
         #endregion
 
@@ -53,12 +54,14 @@ namespace Lpubsppop01.EBookBuilder
             if (!Directory.Exists(TargetDirectoryPath)) return;
             var filePaths = Directory.EnumerateFiles(TargetDirectoryPath);
             var sortedFilePaths = filePaths.OrderBy(filePath => filePath);
+            var itemsToAdd = new List<JPEGFileItem>();
             foreach (var filePath in sortedFilePaths)
             {
                 string filename = Path.GetFileName(filePath);
                 if (!Regex.IsMatch(filename, @".*\.(jpg|jpeg)$", RegexOptions.IgnoreCase)) continue;
-                JPEGFileItems.Add(new JPEGFileItem { Filename = filename });
+                itemsToAdd.Add(new JPEGFileItem { Filename = filename });
             }
+            JPEGFileItems.AddRange(itemsToAdd);
         }
 
         #endregion
