@@ -2,19 +2,14 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/2p9wow6m2lkyh0nl?svg=true)](https://ci.appveyor.com/project/lpubsppop01/ebookbuilder)
 
-This is a simple WPF application to edit scanned JPEG files and build CBZ file.
+This is a simple MAUI app for Windows/macOS to edit scanned JPEG files and build CBZ file.
 
 ## Features
 TODO
 
-## Download
-[EBookBuilder Latest Build - AppVeyor](https://ci.appveyor.com/api/projects/lpubsppop01/ebookbuilder/artifacts/lpubsppop01.EBookBuilder_Publish_Any_CPU.zip)
-
 ## Requirements
-- To use
-    - .NET Framework 4.8.1 or later
-- To build
-    - Visual Studio 2022
+- To build and use
+    - .NET 8 and MAUI workload
 
 ## Author
 [lpubsppop01](https://github.com/lpubsppop01)
