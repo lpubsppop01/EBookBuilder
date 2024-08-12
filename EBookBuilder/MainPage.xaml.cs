@@ -170,6 +170,15 @@ public partial class MainPage : ContentPage
 		Build();
 	}
 
+	async void btnShowReadme_Click(object sender, EventArgs e)
+	{
+		var path = "README.md";
+		using var stream = await FileSystem.Current.OpenAppPackageFileAsync(path);
+		using var reader = new StreamReader(stream);
+		var text = await reader.ReadToEndAsync();
+		await DisplayAlert("README", text, "OK");
+	}
+
 	void lstJPEGFileItems_SelectionChanged(object sender, SelectedItemChangedEventArgs e)
 	{
 		UpdatePreviewImage();

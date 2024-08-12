@@ -87,7 +87,10 @@
             <Button Clicked="btnRenameWithSN_Click" Text="Rename with Serial Number"/>
             <Button Clicked="btnBuild_Click" Text="Build..."/>
         </StackLayout>
-        <Label Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2">Left click to check and right click to select.</Label>
+        <Label Grid.Row="6" Grid.Column="0">Other</Label>
+        <StackLayout Grid.Row="6" Grid.Column="1" Orientation="Horizontal">
+            <Button Clicked="btnShowReadme_Click" Text="Show Readme"/>
+        </StackLayout>
         <Border Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Margin="3" StrokeThickness="1">
             <ListView x:Name="lstJPEGFileItems"
                       ItemsSource="{Binding JPEGFileItems}"

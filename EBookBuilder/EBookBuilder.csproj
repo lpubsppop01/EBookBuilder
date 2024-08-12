@@ -51,6 +51,9 @@
 
 		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+
+		<!-- README.md -->
+		<MauiAsset Include="..\README.md" LogicalName="README.md" />
 	</ItemGroup>
 
 	<ItemGroup>
