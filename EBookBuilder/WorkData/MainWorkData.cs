@@ -52,10 +52,11 @@ namespace Lpubsppop01.EBookBuilder
         {
             JPEGFileItems.Clear();
             if (!Directory.Exists(TargetDirectoryPath)) return;
-            var filePaths = Directory.EnumerateFiles(TargetDirectoryPath);
-            var sortedFilePaths = filePaths.OrderBy(filePath => filePath);
+            var filePaths = new DirectoryInfo(TargetDirectoryPath).GetFiles()
+                .OrderBy(fileInfo => Path.GetFileNameWithoutExtension(fileInfo.Name))
+                .Select(fileInfo => fileInfo.FullName);
             var itemsToAdd = new List<JPEGFileItem>();
-            foreach (var filePath in sortedFilePaths)
+            foreach (var filePath in filePaths)
             {
                 string filename = Path.GetFileName(filePath);
                 if (!Regex.IsMatch(filename, @".*\.(jpg|jpeg)$", RegexOptions.IgnoreCase)) continue;
