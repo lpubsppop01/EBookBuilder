@@ -528,7 +528,8 @@ public partial class MainPage : ContentPage
 
                 MainThread.BeginInvokeOnMainThread(async () =>
                 {
-                    await FileSaver.Default.SaveAsync($"{defaultName}.cbz", stream);
+					var initialPath = Path.GetDirectoryName(targetDirPath);
+                    await FileSaver.Default.SaveAsync(initialPath, $"{defaultName}.cbz", stream);
                 });
             }
         }, this);
