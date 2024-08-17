@@ -236,6 +236,7 @@
     </Compile>
     <Compile Include="External\MyExifOrientation.cs" />
     <Compile Include="External\MyBitmapImageUtility.cs" />
+    <Compile Include="Helpers\EnumToBoolConverter.cs" />
     <Compile Include="UI\BuildDialog.xaml.cs">
       <DependentUpon>BuildDialog.xaml</DependentUpon>
     </Compile>

@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace lpubsppop01.EBookBuilder
@@ -533,8 +534,33 @@ namespace lpubsppop01.EBookBuilder
                     }
                     string inputFilePath = Path.Combine(targetDirPath, targetItem.Filename);
                     string tempFilePath = Path.Combine(tempDirPath, targetItem.Filename);
-                    MyBitmapImageUtility.Resize(inputFilePath, tempFilePath,
-                        BuildWorkData.Current.Width, BuildWorkData.Current.Height);
+                    if (BuildWorkData.Current.ImageFormatKind == BuildImageFormatKind.JPEG)
+                    {
+                        tempFilePath = Path.ChangeExtension(tempFilePath, ".jpg");
+                    }
+                    else if (BuildWorkData.Current.ImageFormatKind == BuildImageFormatKind.PNG)
+                    {
+                        tempFilePath = Path.ChangeExtension(tempFilePath, ".png");
+                    }
+                    if (BuildWorkData.Current.SizeKind == BuildSizeKind.Original)
+                    {
+                        BitmapSource image = MyBitmapImageUtility.LoadWithoutLock(inputFilePath);
+                        if (BuildWorkData.Current.Borders)
+                            image = MyBitmapImageUtility.Border(image);
+                        MyBitmapImageUtility.Save(image, tempFilePath);
+                    }
+                    else if (BuildWorkData.Current.SizeKind == BuildSizeKind.Specified)
+                    {
+                        BitmapSource image = MyBitmapImageUtility.Resize(inputFilePath,
+                            BuildWorkData.Current.Width, BuildWorkData.Current.Height);
+                        if (BuildWorkData.Current.Borders)
+                            image = MyBitmapImageUtility.Border(image);
+                        MyBitmapImageUtility.Save(image, tempFilePath);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException();
+                    }
                     lock (doneCountLock)
                     {
                         ++doneCount;

@@ -19,10 +19,17 @@
             <Setter Property="Margin" Value="3"/>
             <Setter Property="Padding" Value="3,0"/>
         </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Margin" Value="3"/>
+        </Style>
+        <local:EnumToBoolConverter x:Key="EnumToBoolConverter"/>
     </Window.Resources>
     <Border BorderThickness="1" BorderBrush="Gray">
         <Grid Margin="3">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -37,12 +44,46 @@
                 <Button DockPanel.Dock="Right" Padding="3,0" Click="btnSelectOutputFilePath_Click">...</Button>
                 <TextBox Name="txtOutputFilePath" Text="{Binding OutputFilePath}"/>
             </DockPanel>
-            <TextBlock Grid.Row="1" Grid.Column="0">Width</TextBlock>
-            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Width}"/>
-            <TextBlock Grid.Row="2" Grid.Column="0">Height</TextBlock>
-            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Height}"/>
-            <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
-                    Orientation="Horizontal" FlowDirection="RightToLeft">
+            <TextBlock Grid.Row="1" Grid.Column="0">Image Format</TextBlock>
+            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                        Margin="3 0 0 0">
+                <RadioButton GroupName="ImageFormat" Content="JPEG"
+                             IsChecked="{Binding ImageFormatKind,
+                                                 Converter={StaticResource EnumToBoolConverter},
+                                                 ConverterParameter=JPEG}"/>
+                <RadioButton GroupName="ImageFormat" Content="PNG"
+                             IsChecked="{Binding ImageFormatKind,
+                                                 Converter={StaticResource EnumToBoolConverter},
+                                                 ConverterParameter=PNG}"
+                             Margin="12 0 0 0"/>
+            </StackPanel>
+            <TextBlock Grid.Row="2" Grid.Column="0">Size</TextBlock>
+            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                        Margin="3 0 0 0">
+                <RadioButton GroupName="SizeKind" Content="Original"
+                             IsChecked="{Binding SizeKind,
+                                                 Converter={StaticResource EnumToBoolConverter},
+                                                 ConverterParameter=Original}"/>
+                <RadioButton GroupName="SizeKind" Content="Specified"
+                             IsChecked="{Binding SizeKind,
+                                                 Converter={StaticResource EnumToBoolConverter},
+                                                 ConverterParameter=Specified}"
+                             Margin="12 0 0 0"/>
+            </StackPanel>
+            <TextBlock Grid.Row="3" Grid.Column="0">Width</TextBlock>
+            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Width}"
+                     IsEnabled="{Binding SizeKind,
+                                         Converter={StaticResource EnumToBoolConverter},
+                                         ConverterParameter=Specified}"/>
+            <TextBlock Grid.Row="4" Grid.Column="0">Height</TextBlock>
+            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Height}"
+                     IsEnabled="{Binding SizeKind,
+                                         Converter={StaticResource EnumToBoolConverter},
+                                         ConverterParameter=Specified}"/>
+            <CheckBox Grid.Row="5" Grid.Column="1" Content="Border"
+                      IsChecked="{Binding Borders}"/>
+            <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2"
+                        Orientation="Horizontal" FlowDirection="RightToLeft">
                 <Button IsCancel="True">Cancel</Button>
                 <Button IsDefault="True" Click="btnOK_Click">OK</Button>
             </StackPanel>

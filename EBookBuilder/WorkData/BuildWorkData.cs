@@ -3,6 +3,18 @@ using System.Runtime.CompilerServices;
 
 namespace lpubsppop01.EBookBuilder
 {
+    enum BuildImageFormatKind
+    {
+        JPEG,
+        PNG,
+    }
+
+    enum BuildSizeKind
+    {
+        Original,
+        Specified,
+    }
+
     class BuildWorkData : INotifyPropertyChanged
     {
         #region Instance
@@ -35,6 +47,20 @@ namespace lpubsppop01.EBookBuilder
             set { m_OutputFilePath = value; OnPropertyChanged(); }
         }
 
+        BuildImageFormatKind m_ImageFormatKind = BuildImageFormatKind.JPEG;
+        public BuildImageFormatKind ImageFormatKind
+        {
+            get { return m_ImageFormatKind; }
+            set { m_ImageFormatKind = value; OnPropertyChanged(); }
+        }
+
+        BuildSizeKind m_SizeKind = BuildSizeKind.Original;
+        public BuildSizeKind SizeKind
+        {
+            get { return m_SizeKind; }
+            set { m_SizeKind = value; OnPropertyChanged(); }
+        }
+
         int m_Width = 600;
         public int Width
         {
@@ -47,6 +73,13 @@ namespace lpubsppop01.EBookBuilder
         {
             get { return m_Height; }
             set { m_Height = value; OnPropertyChanged(); }
+        }
+
+        bool m_Borders = false;
+        public bool Borders
+        {
+            get { return m_Borders; }
+            set { m_Borders = value; OnPropertyChanged(); }
         }
 
         #endregion
