@@ -75,11 +75,11 @@ namespace lpubsppop01.EBookBuilder
             set { m_Height = value; OnPropertyChanged(); }
         }
 
-        bool m_Borders = false;
-        public bool Borders
+        bool m_DrawsCornerDots = false;
+        public bool DrawsCornerDots
         {
-            get { return m_Borders; }
-            set { m_Borders = value; OnPropertyChanged(); }
+            get { return m_DrawsCornerDots; }
+            set { m_DrawsCornerDots = value; OnPropertyChanged(); }
         }
 
         #endregion

@@ -96,7 +96,7 @@ namespace lpubsppop01.EBookBuilder.External
             Save(croppedImage, outputFilePath);
         }
 
-        public static WriteableBitmap Border(BitmapSource image)
+        public static WriteableBitmap DrawCornerDots(BitmapSource image)
         {
             // Convert to byte array
             var pixelWidth = image.PixelWidth;
@@ -106,14 +106,16 @@ namespace lpubsppop01.EBookBuilder.External
             var pixels = new byte[stride * pixelHeight];
             image.CopyPixels(pixels, stride, 0);
 
-            // Draw border
-            var borderWidth = 2;
-            var borderHeight = 2;
+            // Draw corner dots
+            var dotsWidth = 2;
+            var dotsHeight = 2;
             for (var y = 0; y < pixelHeight; y++)
             {
                 for (var x = 0; x < pixelWidth; x++)
                 {
-                    if (x < borderWidth || x >= pixelWidth - borderWidth || y < borderHeight || y >= pixelHeight - borderHeight)
+                    var xIsInTarget = x < dotsWidth || x >= pixelWidth - dotsWidth;
+                    var yIsInTarget = y < dotsHeight || y >= pixelHeight - dotsHeight;
+                    if (xIsInTarget & yIsInTarget)
                     {
                         var index = y * stride + x * bytesPerPixel;
                         if (bytesPerPixel > 0)
@@ -128,7 +130,7 @@ namespace lpubsppop01.EBookBuilder.External
                 }
             }
 
-            // Create image from borderd byte array
+            // Create image from edited byte array
             var borderedImage = new WriteableBitmap(pixelWidth, pixelHeight, image.DpiX, image.DpiY, image.Format, image.Palette);
             borderedImage.WritePixels(new Int32Rect(0, 0, pixelWidth, pixelHeight), pixels, stride, 0);
             return borderedImage;

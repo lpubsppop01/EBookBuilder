@@ -545,16 +545,16 @@ namespace lpubsppop01.EBookBuilder
                     if (BuildWorkData.Current.SizeKind == BuildSizeKind.Original)
                     {
                         BitmapSource image = MyBitmapImageUtility.LoadWithoutLock(inputFilePath);
-                        if (BuildWorkData.Current.Borders)
-                            image = MyBitmapImageUtility.Border(image);
+                        if (BuildWorkData.Current.DrawsCornerDots)
+                            image = MyBitmapImageUtility.DrawCornerDots(image);
                         MyBitmapImageUtility.Save(image, tempFilePath);
                     }
                     else if (BuildWorkData.Current.SizeKind == BuildSizeKind.Specified)
                     {
                         BitmapSource image = MyBitmapImageUtility.Resize(inputFilePath,
                             BuildWorkData.Current.Width, BuildWorkData.Current.Height);
-                        if (BuildWorkData.Current.Borders)
-                            image = MyBitmapImageUtility.Border(image);
+                        if (BuildWorkData.Current.DrawsCornerDots)
+                            image = MyBitmapImageUtility.DrawCornerDots(image);
                         MyBitmapImageUtility.Save(image, tempFilePath);
                     }
                     else

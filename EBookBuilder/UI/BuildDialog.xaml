@@ -80,8 +80,8 @@
                      IsEnabled="{Binding SizeKind,
                                          Converter={StaticResource EnumToBoolConverter},
                                          ConverterParameter=Specified}"/>
-            <CheckBox Grid.Row="5" Grid.Column="1" Content="Border"
-                      IsChecked="{Binding Borders}"/>
+            <CheckBox Grid.Row="5" Grid.Column="1" Content="Corner Dots"
+                      IsChecked="{Binding DrawsCornerDots}"/>
             <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2"
                         Orientation="Horizontal" FlowDirection="RightToLeft">
                 <Button IsCancel="True">Cancel</Button>
