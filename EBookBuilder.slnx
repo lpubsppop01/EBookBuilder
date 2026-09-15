@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="EBookBuilder.App.Tests/EBookBuilder.App.Tests.csproj" />
+  <Project Path="EBookBuilder.App/EBookBuilder.App.csproj" />
+  <Project Path="EBookBuilder.Cli/EBookBuilder.Cli.csproj" />
+  <Project Path="EBookBuilder.Core.Tests/EBookBuilder.Core.Tests.csproj" />
+  <Project Path="EBookBuilder.Core/EBookBuilder.Core.csproj" />
+</Solution>
