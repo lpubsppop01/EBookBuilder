@@ -1,0 +1,104 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Lpubsppop01.EBookBuilder.App.ViewModels"
+        xmlns:conv="using:Lpubsppop01.EBookBuilder.App.Converters"
+        x:Class="Lpubsppop01.EBookBuilder.App.Views.BuildDialog"
+        x:DataType="vm:BuildSettings"
+        Title="Build"
+        Width="520"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <conv:EnumToBoolConverter x:Key="EnumToBoolConverter"/>
+    </Window.Resources>
+    <Window.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Margin" Value="3"/>
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <!--
+                The Fluent theme does not set the horizontal alignment, so set it explicitly
+                (the default is Stretch, which means left-aligned).
+            -->
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="RadioButton">
+            <Setter Property="Margin" Value="3"/>
+        </Style>
+        <Style Selector="NumericUpDown">
+            <Setter Property="Margin" Value="3"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid Margin="6"
+          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+          ColumnDefinitions="Auto,*">
+
+        <TextBlock Grid.Row="0" Grid.Column="0">Output</TextBlock>
+        <DockPanel Grid.Row="0" Grid.Column="1">
+            <Button DockPanel.Dock="Right" Padding="8,2" Click="Browse_Click" Content="..."/>
+            <TextBox Text="{Binding OutputFilePath}"/>
+        </DockPanel>
+
+        <TextBlock Grid.Row="1" Grid.Column="0">Format</TextBlock>
+        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+            <RadioButton GroupName="ImageFormat" Content="JPEG"
+                         IsChecked="{Binding ImageFormatKind,
+                                     Converter={StaticResource EnumToBoolConverter},
+                                     ConverterParameter=Jpeg}"/>
+            <RadioButton GroupName="ImageFormat" Content="PNG"
+                         IsChecked="{Binding ImageFormatKind,
+                                     Converter={StaticResource EnumToBoolConverter},
+                                     ConverterParameter=Png}"/>
+        </StackPanel>
+
+        <TextBlock Grid.Row="2" Grid.Column="0">Size</TextBlock>
+        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+            <RadioButton GroupName="SizeKind" Content="Original"
+                         IsChecked="{Binding SizeKind,
+                                     Converter={StaticResource EnumToBoolConverter},
+                                     ConverterParameter=Original}"/>
+            <RadioButton GroupName="SizeKind" Content="Specified"
+                         IsChecked="{Binding SizeKind,
+                                     Converter={StaticResource EnumToBoolConverter},
+                                     ConverterParameter=Specified}"/>
+        </StackPanel>
+
+        <TextBlock Grid.Row="3" Grid.Column="0">Width x Height</TextBlock>
+        <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal">
+            <NumericUpDown Value="{Binding Width}" Minimum="1" Maximum="100000"
+                           IsEnabled="{Binding IsSizeSpecified}" Width="140"/>
+            <TextBlock>x</TextBlock>
+            <NumericUpDown Value="{Binding Height}" Minimum="1" Maximum="100000"
+                           IsEnabled="{Binding IsSizeSpecified}" Width="140"/>
+        </StackPanel>
+
+        <TextBlock Grid.Row="4" Grid.Column="0">JPEG Quality</TextBlock>
+        <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal"
+                    IsEnabled="{Binding IsJpegQualitySpecified}">
+            <Slider Value="{Binding JpegQuality}" Minimum="1" Maximum="100"
+                    Width="260" TickFrequency="1" IsSnapToTickEnabled="True"/>
+            <TextBlock Text="{Binding JpegQuality}" MinWidth="40"/>
+        </StackPanel>
+
+        <TextBlock Grid.Row="5" Grid.Column="0">Options</TextBlock>
+        <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal">
+            <CheckBox Content="Corner Dots" IsChecked="{Binding DrawsCornerDots}"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2">
+            <TextBlock Text="{Binding OutputFormatDescription}" TextWrapping="Wrap" Foreground="Gray"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                <Button Content="OK" Click="Ok_Click" IsDefault="True" MinWidth="90"/>
+                <Button Content="Cancel" Click="Cancel_Click" IsCancel="True" MinWidth="90"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

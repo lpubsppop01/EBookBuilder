@@ -1,0 +1,20 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Lpubsppop01.EBookBuilder.App.Views.ProgressDialog"
+        Title="EBookBuilder"
+        Width="460"
+        SizeToContent="Height"
+        CanResize="False"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+    <StackPanel Margin="20" Spacing="12">
+        <TextBlock x:Name="ctrlMessage" TextWrapping="Wrap"/>
+        <ProgressBar x:Name="ctrlProgress" Minimum="0" Maximum="100" Height="16"/>
+        <!--
+            The Fluent theme does not set the horizontal alignment, so set it explicitly
+            (with MinWidth the content looks left-aligned).
+        -->
+        <Button x:Name="ctrlCancel" Content="Stop" Click="Cancel_Click"
+                HorizontalAlignment="Right" MinWidth="90" HorizontalContentAlignment="Center"/>
+    </StackPanel>
+</Window>

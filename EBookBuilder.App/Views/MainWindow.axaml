@@ -1,0 +1,109 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Lpubsppop01.EBookBuilder.App.ViewModels"
+        x:Class="Lpubsppop01.EBookBuilder.App.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="EBookBuilder"
+        Width="900" Height="480"
+        MinWidth="600" MinHeight="400">
+    <Window.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Margin" Value="3"/>
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <!--
+                The Fluent theme does not set HorizontalContentAlignment, so the default
+                Stretch takes effect and the content ends up left-aligned. Center it explicitly.
+            -->
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="ListBox">
+            <Setter Property="Margin" Value="3"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid Margin="3"
+          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto"
+          ColumnDefinitions="Auto,*,Auto,*">
+
+        <TextBlock Grid.Row="0" Grid.Column="0">Folder</TextBlock>
+        <DockPanel Grid.Row="0" Grid.Column="1">
+            <Button DockPanel.Dock="Right" Padding="8,2" Command="{Binding SelectFolderCommand}" Content="..."/>
+            <TextBox Text="{Binding TargetDirectoryPath}" IsReadOnly="True"/>
+        </DockPanel>
+
+        <TextBlock Grid.Row="1" Grid.Column="0">Check</TextBlock>
+        <!--
+            The button rows use a WrapPanel.
+            A StackPanel does not wrap, so with too little width it overflows its column
+            and overlaps the preview area beside it.
+            To stay independent of the font and the label lengths, it wraps when it does not fit.
+        -->
+        <WrapPanel Grid.Row="1" Grid.Column="1">
+            <Button Command="{Binding CheckAllCommand}" Content="All"/>
+            <Button Command="{Binding CheckOddCommand}" Content="Odd"/>
+            <Button Command="{Binding CheckEvenCommand}" Content="Even"/>
+        </WrapPanel>
+
+        <TextBlock Grid.Row="2" Grid.Column="0">Uncheck</TextBlock>
+        <WrapPanel Grid.Row="2" Grid.Column="1">
+            <Button Command="{Binding UncheckAllCommand}" Content="All"/>
+            <Button Command="{Binding UncheckUpperCommand}" Content="Upper"/>
+            <Button Command="{Binding UncheckLowerCommand}" Content="Lower"/>
+        </WrapPanel>
+
+        <TextBlock Grid.Row="3" Grid.Column="0">Rotate</TextBlock>
+        <WrapPanel Grid.Row="3" Grid.Column="1">
+            <Button Command="{Binding Rotate90Command}" Content="90°"/>
+            <Button Command="{Binding Rotate180Command}" Content="180°"/>
+            <Button Command="{Binding Rotate270Command}" Content="270°"/>
+        </WrapPanel>
+
+        <TextBlock Grid.Row="4" Grid.Column="0">Single</TextBlock>
+        <WrapPanel x:Name="ctrlSingleButtons" Grid.Row="4" Grid.Column="1">
+            <Button Command="{Binding DuplicateToNextCommand}" Content="Duplicate to Next"/>
+            <Button Command="{Binding DuplicateToLastCommand}" Content="Duplicate to Last"/>
+            <Button Command="{Binding MoveToLastCommand}" Content="Move to Last"/>
+            <Button Command="{Binding DeleteCommand}" Content="Delete"/>
+            <Button Command="{Binding CropCommand}" Content="Crop..."/>
+        </WrapPanel>
+
+        <TextBlock Grid.Row="5" Grid.Column="0">Whole</TextBlock>
+        <WrapPanel x:Name="ctrlWholeButtons" Grid.Row="5" Grid.Column="1">
+            <Button Command="{Binding RenameCommand}" Content="Rename with Serial Number"/>
+            <Button Command="{Binding BuildCommand}" Content="Build..."/>
+        </WrapPanel>
+
+        <TextBlock Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2">
+            Left click to check and right click to select.
+        </TextBlock>
+
+        <ListBox Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2"
+                 ItemsSource="{Binding Pages}"
+                 SelectedItem="{Binding SelectedPage}">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:PageItem">
+                    <CheckBox IsChecked="{Binding IsChecked}" Content="{Binding Filename}"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <GridSplitter Grid.Row="0" Grid.RowSpan="9" Grid.Column="2" Width="5" HorizontalAlignment="Center"/>
+
+        <Border x:Name="ctrlPreviewArea" Grid.Row="0" Grid.RowSpan="9" Grid.Column="3" Margin="3"
+                BorderThickness="1" BorderBrush="Gray"
+                ClipToBounds="True">
+            <Image Source="{Binding PreviewImage}" Stretch="Uniform"/>
+        </Border>
+
+        <TextBlock Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="4"
+                   Text="{Binding StatusMessage}"
+                   TextTrimming="CharacterEllipsis"/>
+    </Grid>
+</Window>
