@@ -6,8 +6,9 @@ public static class PageSelection
     /// <summary>Returns the position when exactly one item is selected. Otherwise -1.</summary>
     /// <remarks>
     /// <para>
-    /// Duplicate, move, delete and crop each need the single page they act on to be unambiguous.
+    /// Duplicate and move-to-last each need the single page they act on to be unambiguous.
     /// With 0 or 2 or more selected the operation cannot be performed, so -1 is returned.
+    /// (Delete and crop take every checked page as their target, so this does not apply to them.)
     /// </para>
     /// <para>
     /// Writing this with <c>Enumerable.SingleOrDefault</c> would throw when 2 or more are

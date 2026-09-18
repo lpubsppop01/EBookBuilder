@@ -14,6 +14,7 @@ The version before the port can be taken from the `wpf-final` tag.
 - **Page order is reliable.** Pages are sorted in the ordinal order of their file names, and the CBZ entries are written in that order.
 - Checking while looking at the preview, checking odd/even pages in bulk,
   and per-page duplication, move to end, deletion and cropping.
+  Deletion and cropping apply to every checked page at once.
 - When cropping, the range that will be removed is shown in red.
 - The progress dialog can be cancelled.
 
@@ -90,6 +91,14 @@ Deliberate differences from the original WPF version.
 - **The JPEG quality can be specified.** The default is 90 (the original was fixed at 75 and did not expose it in the UI either).
   When the settings say not to re-encode, however, specifying it does not change the result, so the input field is disabled.
 - **Build targets the whole folder.** It can be run regardless of how many pages are checked (the original did not require a single selection either).
+- **Deletion and cropping apply to every checked page.** The original required exactly one checked page for both.
+  Duplication and move to end still work on a single page, because their target position has to be unambiguous.
+  Cropping opens the dialog only when all of the targets are of the same size, since the margins are chosen on a
+  single preview image. Sizes that differ by up to 4 pixels or 1.5% (whichever is larger) are treated as the same,
+  because the paper edge a scan detects moves from page to page; a page of a different format is still reported and
+  stops the operation without changing anything. That report groups the pages by size, names the pages of the smaller
+  groups and gives how far each size is from the rest in pixels and percent, so that the tolerance can be judged
+  against what was actually scanned.
 - **No upscaling when a size is specified.** When the target frame is larger than the original image, the original size is kept.
   The original upscaled. For the purpose of shrinking scanned images for e-books, upscaling is meaningless.
 - **Page order does not depend on the file system.** The original used the order returned by `Directory.EnumerateFiles`

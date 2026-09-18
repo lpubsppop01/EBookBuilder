@@ -27,6 +27,11 @@ public sealed class TestPages : IDisposable
         return new TestPages(path);
     }
 
+    /// <summary>Writes one page with the given dimensions, replacing any file of the same name.</summary>
+    /// <remarks>Used for tests that need pages of different sizes.</remarks>
+    public void WritePage(string filename, int width, int height) =>
+        WriteJpeg(System.IO.Path.Combine(Path, filename), width, height);
+
     static void WriteJpeg(string path, int width, int height)
     {
         using var bitmap = new SKBitmap(new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul));
