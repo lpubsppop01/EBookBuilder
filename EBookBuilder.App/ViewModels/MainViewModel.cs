@@ -628,7 +628,9 @@ public sealed class MainViewModel : ObservableObject
 
         var settings = new BuildSettings
         {
-            OutputFilePath = TargetDirectoryPath + ".cbz",
+            OutputFilePath = BuildSettings.DefaultOutputFilePath(TargetDirectoryPath, m_Settings.ContainerKind),
+            ContainerKind = m_Settings.ContainerKind,
+            PdfPageDpi = m_Settings.PdfPageDpi,
             ImageFormatKind = m_Settings.ImageFormatKind,
             SizeKind = m_Settings.SizeKind,
             Width = m_Settings.TargetWidth,
@@ -640,6 +642,8 @@ public sealed class MainViewModel : ObservableObject
         if (!await m_Shell.ShowBuildDialogAsync(settings)) return;
 
         // Remember these for next time
+        m_Settings.ContainerKind = settings.ContainerKind;
+        m_Settings.PdfPageDpi = settings.PdfPageDpi;
         m_Settings.ImageFormatKind = settings.ImageFormatKind;
         m_Settings.SizeKind = settings.SizeKind;
         m_Settings.TargetWidth = settings.Width;
@@ -653,7 +657,7 @@ public sealed class MainViewModel : ObservableObject
 
         await m_Shell.RunWithProgressAsync(async (progress, token) =>
         {
-            result = await CbzBuilder.BuildAsync(
+            result = await BookBuilder.BuildAsync(
                 TargetDirectoryPath, filenames, settings.ToBuildOptions(), progress, token);
         });
 

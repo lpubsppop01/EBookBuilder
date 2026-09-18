@@ -42,20 +42,41 @@ public sealed class DialogService : IDialogService
         var topLevel = m_OwnerProvider() as TopLevel;
         if (topLevel is null) return null;
 
+        // The suggested name already carries the extension the build is going to write, so both the
+        // title and the file types are taken from it rather than from the settings a second time.
+        var (title, fileTypes) = DescribeSaveTarget(suggestedFileName);
+
         var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = "Choose where to save the CBZ",
+            Title = title,
             SuggestedFileName = suggestedFileName,
             DefaultExtension = Path.GetExtension(suggestedFileName).TrimStart('.'),
             SuggestedStartLocation = await TryGetFolderAsync(topLevel, initialDirectoryPath),
-            FileTypeChoices =
-            [
-                new FilePickerFileType("Comic Book ZIP") { Patterns = ["*.cbz"] },
-                new FilePickerFileType("ZIP archive") { Patterns = ["*.zip"] },
-            ],
+            FileTypeChoices = fileTypes,
         });
 
         return file?.TryGetLocalPath();
+    }
+
+    /// <summary>Describes what the save picker should offer for a suggested name.</summary>
+    /// <param name="suggestedFileName">The name the build is going to write.</param>
+    /// <remarks>
+    /// Kept separate from the picker itself, which needs a live window and so cannot be tested,
+    /// while this can.
+    /// </remarks>
+    public static (string Title, FilePickerFileType[] Types) DescribeSaveTarget(string suggestedFileName)
+    {
+        if (Path.GetExtension(suggestedFileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return ("Choose where to save the PDF",
+                [new FilePickerFileType("PDF document") { Patterns = ["*.pdf"] }]);
+        }
+
+        return ("Choose where to save the CBZ",
+        [
+            new FilePickerFileType("Comic Book ZIP") { Patterns = ["*.cbz"] },
+            new FilePickerFileType("ZIP archive") { Patterns = ["*.zip"] },
+        ]);
     }
 
     static async Task<IStorageFolder?> TryGetFolderAsync(TopLevel topLevel, string? path)

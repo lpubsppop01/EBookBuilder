@@ -41,6 +41,12 @@ public sealed class AppSettings
     /// <summary>The folder that was open last time. Used as the initial location next time.</summary>
     public string? LastTargetDirectoryPath { get; set; }
 
+    /// <summary>The container to write the pages into.</summary>
+    public BuildContainerKind ContainerKind { get; set; } = BuildContainerKind.Cbz;
+
+    /// <summary>The resolution the PDF pages are given. Only meaningful for a PDF.</summary>
+    public int PdfPageDpi { get; set; } = BuildOptions.DefaultPdfPageDpi;
+
     /// <summary>The image format to output.</summary>
     public BuildImageFormatKind ImageFormatKind { get; set; } = BuildImageFormatKind.Jpeg;
 

@@ -51,7 +51,7 @@ static int Fail(string command)
 static void PrintUsage(TextWriter writer)
 {
     writer.WriteLine("""
-        ebookbuilder-cli - build a CBZ from scanned page images
+        ebookbuilder-cli - build a CBZ or a PDF from scanned page images
 
         Usage:
           ebookbuilder-cli <command> [options]
@@ -77,19 +77,23 @@ static void PrintUsage(TextWriter writer)
           delete  Delete pages (the serial numbers are not closed up)
                   --dir <folder> --index <n>
 
-          build   Write a CBZ file (the file names must be serial numbers)
+          build   Write a CBZ or a PDF file (the file names must be serial numbers)
                   --dir <folder> --out <output path>
-                  [--format <jpeg|png>] [--size <original|width x height>]
-                  [--dots] [--quality <1-100>]
+                  [--container <cbz|pdf>] [--format <jpeg|png>] [--size <original|width x height>]
+                  [--dots] [--quality <1-100>] [--dpi <n>]
 
                   When --size is original, --dots is absent and the output is jpeg,
                   the files are packaged as they are without re-encoding (the image quality stays as it was).
-                  The default of --size is original. The default of --quality is 90.
+                  With --container pdf the same pages are embedded in the PDF as they are.
+                  --format png cannot be combined with --container pdf, because a PDF stores JPEG page images.
+                  The default of --size is original, of --quality 90, of --dpi 300.
+                  --dpi only affects the physical size the PDF pages are given.
 
         Examples:
           ebookbuilder-cli list   --dir ./scans
           ebookbuilder-cli rotate --dir ./scans --deg 90
           ebookbuilder-cli crop   --dir ./scans --index 3 --left 20 --right 20
           ebookbuilder-cli build  --dir ./scans --out ./book.cbz --size 600x1024 --dots
+          ebookbuilder-cli build  --dir ./scans --out ./book.pdf --container pdf
         """);
 }
