@@ -173,6 +173,45 @@ public class PageOperationsTests
             () => PageOperations.Crop(folder.Path, "0.jpg", left, top, right, bottom));
     }
 
+    [Fact]
+    public void AllPagesCanBeCroppedAtOnce()
+    {
+        using var folder = TempPageFolder.CreateWithSerialPages(3);
+        var filenames = folder.EnumerateFilenames();
+
+        PageOperations.CropAll(folder.Path, filenames, left: 10, top: 20, right: 10, bottom: 20);
+
+        foreach (var filename in filenames)
+        {
+            Assert.Equal(new ImageSize(60, 80), PageImagePipeline.ReadOrientedSize(folder.FilePath(filename)));
+        }
+    }
+
+    [Fact]
+    public void CropProgressIsReportedOncePerPage()
+    {
+        using var folder = TempPageFolder.CreateWithSerialPages(3);
+        var filenames = folder.EnumerateFilenames();
+        var progress = new SyncProgress<PageProgress>();
+
+        PageOperations.CropAll(folder.Path, filenames, 10, 20, 10, 20, progress: progress);
+
+        Assert.Equal(3, progress.Reports.Count);
+        Assert.Equal(100, progress.Reports[^1].Percentage);
+    }
+
+    [Fact]
+    public void NoTemporaryFilesAreLeftBehindAfterCroppingSeveralPages()
+    {
+        using var folder = TempPageFolder.CreateWithSerialPages(3);
+        var filenames = folder.EnumerateFilenames();
+
+        PageOperations.CropAll(folder.Path, filenames, 10, 20, 10, 20);
+
+        // A leftover ".cropping" file would show up here
+        Assert.Equal(filenames, folder.EnumerateFilenames());
+    }
+
     #endregion
 
     #region Serial renaming

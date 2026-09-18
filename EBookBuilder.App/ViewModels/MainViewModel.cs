@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using Avalonia.Media.Imaging;
 using Lpubsppop01.EBookBuilder.App.Imaging;
 using Lpubsppop01.EBookBuilder.App.Services;
@@ -57,11 +58,14 @@ public sealed class MainViewModel : ObservableObject
         Rotate270Command = Guarded(() => RotateAsync(RotationAmount.Deg270), () => CanRotate);
 
         RenameCommand = Guarded(RenameAsync, () => Pages.Count > 0);
-        CropCommand = Guarded(CropAsync, () => CanDoSingleAction);
+
+        // Crop and delete take every checked page as their target, so one or more checks are enough.
+        CropCommand = Guarded(CropAsync, () => CanDoCheckedAction);
+        DeleteCommand = Guarded(DeleteAsync, () => CanDoCheckedAction);
+
         DuplicateToNextCommand = Guarded(() => DuplicateAsync(toLast: false), () => CanDoSingleAction);
         DuplicateToLastCommand = Guarded(() => DuplicateAsync(toLast: true), () => CanDoSingleAction);
         MoveToLastCommand = Guarded(MoveToLastAsync, () => CanDoSingleAction);
-        DeleteCommand = Guarded(DeleteAsync, () => CanDoSingleAction);
 
         // A build targets the whole folder, so the number of checked pages does not matter.
         // Whether the filenames are serial numbers is also reported at run time
@@ -202,7 +206,10 @@ public sealed class MainViewModel : ObservableObject
     int CheckedIndex => PageSelection.IndexOfSingleChecked(Pages, page => page.IsChecked);
 
     /// <summary>Whether exactly one page is checked and the filenames are serial numbers.</summary>
-    bool CanDoSingleAction => CheckedIndex >= 0 && PageNaming.AreSerialNumbers(Filenames);
+    bool CanDoSingleAction => CheckedIndex >= 0 && CanDoCheckedAction;
+
+    /// <summary>Whether one or more pages are checked and the filenames are serial numbers.</summary>
+    bool CanDoCheckedAction => CheckedPages.Count > 0 && PageNaming.AreSerialNumbers(Filenames);
 
     bool CanRotate => CheckedPages.Count > 0;
 
@@ -284,6 +291,7 @@ public sealed class MainViewModel : ObservableObject
     {
         foreach (var command in AllCommands) command.RaiseCanExecuteChanged();
         OnPropertyChanged(nameof(CanDoSingleAction));
+        OnPropertyChanged(nameof(CanDoCheckedAction));
     }
 
     IEnumerable<IRelayCommand> AllCommands =>
@@ -360,17 +368,50 @@ public sealed class MainViewModel : ObservableObject
         StatusMessage = $"Renamed {renamed.Count} pages to serial numbers.";
     }
 
+    /// <summary>
+    /// Crops the checked pages with the same margins.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The crop dialog shows a single preview image to decide the margins on, so it can only be
+    /// opened when every target has the same dimensions. Pages that differ by a few pixels are
+    /// still treated as the same size, because that is normal for scanned pages (see
+    /// <see cref="CropSizeTolerance"/>); a page of a different format is not accepted. The preview
+    /// uses the first checked page.
+    /// </para>
+    /// <para>
+    /// The margins are validated against every target, not only against the previewed page: with
+    /// the tolerance above, margins that fit the first page can still be too large for a slightly
+    /// smaller one, and that would fail partway through and leave the pages unevenly cropped.
+    /// </para>
+    /// </remarks>
     async Task CropAsync()
     {
-        var index = CheckedIndex;
-        if (index < 0) return;
+        var targets = CheckedPages.Select(page => page.Filename).ToArray();
+        if (targets.Length == 0) return;
 
-        var filename = Pages[index].Filename;
-        var path = Path.Combine(TargetDirectoryPath, filename);
-        var settings = new CropSettings { SourceSize = PageImagePipeline.ReadOrientedSize(path) };
+        var sizes = targets
+            .Select(filename => PageImagePipeline.ReadOrientedSize(Path.Combine(TargetDirectoryPath, filename)))
+            .ToArray();
+        var sourceSize = sizes[0];
 
+        if (targets.Length > 1 && !sizes.All(size => CropSizeTolerance.AreSameSize(sourceSize, size)))
+        {
+            await m_Dialogs.AlertAsync(DescribeMixedSizes(targets, sizes), "Cannot crop");
+            return;
+        }
+
+        var settings = new CropSettings
+        {
+            SourceSize = sourceSize,
+            TargetCount = targets.Length,
+            SizeDifference = sizes.Max(size => CropSizeTolerance.Difference(sourceSize, size)),
+        };
+
+        var path = Path.Combine(TargetDirectoryPath, targets[0]);
         if (!await m_Shell.ShowCropDialogAsync(settings, path)) return;
-        if (!settings.IsValid)
+
+        if (!sizes.All(settings.LeavesAreaOn))
         {
             await m_Dialogs.AlertAsync("The margins are too large.", "Cannot crop");
             return;
@@ -378,15 +419,90 @@ public sealed class MainViewModel : ObservableObject
 
         await m_Shell.RunWithProgressAsync((progress, token) =>
         {
-            PageOperations.Crop(
-                TargetDirectoryPath, filename,
+            PageOperations.CropAll(
+                TargetDirectoryPath, targets,
                 settings.Left, settings.Top, settings.Right, settings.Bottom,
-                m_Settings.JpegQuality);
+                m_Settings.JpegQuality, progress, token);
             return Task.CompletedTask;
         });
 
         UpdatePreviewImage();
-        StatusMessage = $"Cropped {filename} to {settings.CropWidth} x {settings.CropHeight}.";
+        StatusMessage = targets.Length == 1
+            ? $"Cropped {targets[0]} to {settings.CropWidth} x {settings.CropHeight}."
+            : $"Cropped {targets.Length} pages to {settings.CropWidth} x {settings.CropHeight}.";
+    }
+
+    /// <summary>Describes the sizes that were mixed in, grouped by size.</summary>
+    /// <remarks>
+    /// <para>
+    /// Grouping by size rather than listing page by page is what makes the reason readable: it
+    /// shows whether the mix is scan variation of a few pixels or a page of a different format.
+    /// The filenames are listed for the small groups, to point at the page that stands out.
+    /// </para>
+    /// <para>
+    /// How far each size is from the reference is given in both pixels and percent, so that the
+    /// tolerance can be judged against what was actually scanned. The allowed difference is stated
+    /// at the end, so that it can be compared with those numbers directly.
+    /// </para>
+    /// </remarks>
+    static string DescribeMixedSizes(IReadOnlyList<string> targets, IReadOnlyList<ImageSize> sizes)
+    {
+        const int MaxListedNames = 5;
+
+        var reference = sizes[0];
+        var lines = new List<string>();
+
+        var groups = sizes
+            .Select((size, index) => (Size: size, Filename: targets[index]))
+            .GroupBy(entry => entry.Size)
+            .OrderByDescending(group => group.Count());
+
+        foreach (var group in groups)
+        {
+            var count = group.Count();
+            var size = group.Key;
+
+            var difference = size == reference
+                ? "(reference)"
+                : $"({DescribeSizeDifference(reference, size)})";
+            var names = count <= MaxListedNames
+                ? $" ({string.Join(", ", group.Select(entry => entry.Filename))})"
+                : "";
+
+            lines.Add($"{size.Width} x {size.Height} {difference}: {count} page{(count == 1 ? "" : "s")}{names}");
+        }
+
+        return $"""
+            The checked pages do not all have the same size.
+
+            {string.Join(Environment.NewLine, lines)}
+
+            Cropping needs every target to have the same size.
+            A difference of up to {CropSizeTolerance.MinimumPixels} pixels or {CropSizeTolerance.Ratio * 100:0.#}%, whichever is larger, is allowed.
+            """;
+    }
+
+    /// <summary>Describes how far a size is from the reference, in pixels and percent.</summary>
+    static string DescribeSizeDifference(ImageSize reference, ImageSize size)
+    {
+        var parts = new List<string>();
+
+        AddSizeDifference(parts, size.Width - reference.Width, reference.Width, "wider", "narrower");
+        AddSizeDifference(parts, size.Height - reference.Height, reference.Height, "taller", "shorter");
+
+        return string.Join(", ", parts);
+    }
+
+    static void AddSizeDifference(
+        List<string> parts, int difference, int referenceLength, string larger, string smaller)
+    {
+        if (difference == 0) return;
+
+        // The percent is relative to the reference length, which is what the tolerance uses.
+        var percent = ((double)Math.Abs(difference) / referenceLength * 100)
+            .ToString("0.##", CultureInfo.InvariantCulture);
+
+        parts.Add($"{Math.Abs(difference)} pixels / {percent}% {(difference > 0 ? larger : smaller)}");
     }
 
     async Task DuplicateAsync(bool toLast)
@@ -442,18 +558,50 @@ public sealed class MainViewModel : ObservableObject
 
     async Task DeleteAsync()
     {
-        var index = CheckedIndex;
-        if (index < 0) return;
+        var checkedPages = CheckedPages;
+        var targets = checkedPages.Select(page => page.Filename).ToArray();
+        if (targets.Length == 0) return;
 
-        var filename = Pages[index].Filename;
-        if (!await m_Dialogs.ConfirmAsync($"Do you really want to delete \"{filename}\"?")) return;
+        if (!await m_Dialogs.ConfirmAsync(DeleteConfirmation(targets))) return;
 
-        PageOperations.Delete(TargetDirectoryPath, filename);
-        Pages.RemoveAt(index);
+        var firstIndex = Pages.IndexOf(checkedPages[0]);
+        var selectedWasDeleted = SelectedPage is not null && checkedPages.Contains(SelectedPage);
+
+        foreach (var filename in targets) PageOperations.Delete(TargetDirectoryPath, filename);
+        foreach (var page in checkedPages) Pages.Remove(page);
+
+        // Leaving the selection on a page that no longer exists would keep the preview and the
+        // selection state pointing at nothing, so it moves to the page that took its place.
+        if (selectedWasDeleted)
+        {
+            SelectedPage = Pages.Count == 0 ? null : Pages[Math.Min(firstIndex, Pages.Count - 1)];
+        }
 
         RefreshCommands();
         UpdatePreviewImage();
-        StatusMessage = $"Deleted \"{filename}\". The serial numbers were not closed up.";
+        StatusMessage = targets.Length == 1
+            ? $"Deleted \"{targets[0]}\". The serial numbers were not closed up."
+            : $"Deleted {targets.Length} pages. The serial numbers were not closed up.";
+    }
+
+    /// <summary>The confirmation message shown before deleting.</summary>
+    /// <remarks>The list of names is capped, so that checking everything does not make the dialog endless.</remarks>
+    static string DeleteConfirmation(IReadOnlyList<string> targets)
+    {
+        if (targets.Count == 1) return $"Do you really want to delete \"{targets[0]}\"?";
+
+        const int MaxListed = 10;
+
+        var listed = string.Join(Environment.NewLine, targets.Take(MaxListed).Select(filename => "  " + filename));
+        var rest = targets.Count > MaxListed
+            ? $"{Environment.NewLine}  ... and {targets.Count - MaxListed} more"
+            : "";
+
+        return $"""
+            Do you really want to delete {targets.Count} pages?
+
+            {listed}{rest}
+            """;
     }
 
     /// <summary>Replaces only the filenames. The page order is decided by the caller.</summary>

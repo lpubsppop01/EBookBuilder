@@ -133,6 +133,41 @@ public static class PageOperations
         }
     }
 
+    /// <summary>Crops multiple pages at once with the same margins.</summary>
+    /// <remarks>
+    /// <para>
+    /// The caller is expected to check beforehand that every page has the same dimensions,
+    /// because the margins are chosen for one image and applied to all of them.
+    /// </para>
+    /// <para>
+    /// The pages are processed one at a time. Unlike <see cref="RotateAllAsync"/>, which only
+    /// rewrites tags, cropping decodes and re-encodes the whole image, so running several in
+    /// parallel would only pile up memory. If one of them fails, the pages after it are left
+    /// as they are.
+    /// </para>
+    /// </remarks>
+    /// <inheritdoc cref="Crop" path="/exception"/>
+    public static void CropAll(
+        string directoryPath,
+        IReadOnlyList<string> filenames,
+        int left,
+        int top,
+        int right,
+        int bottom,
+        int jpegQuality = PageImagePipeline.DefaultJpegQuality,
+        IProgress<PageProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var done = 0;
+        foreach (var filename in filenames)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Crop(directoryPath, filename, left, top, right, bottom, jpegQuality);
+
+            progress?.Report(new PageProgress(++done, filenames.Count));
+        }
+    }
+
     /// <summary>
     /// Renumbers to serial numbers in the given order.
     /// </summary>

@@ -52,6 +52,9 @@ public sealed class FakeShellDialogs : IShellDialogs
     /// <summary>The settings passed to the crop dialog.</summary>
     public CropSettings? LastCropSettings { get; private set; }
 
+    /// <summary>Applied to the settings when the crop dialog is shown (simulates the user entering margins).</summary>
+    public Action<CropSettings>? CropDialogAction { get; set; }
+
     /// <summary>The settings passed to the build dialog.</summary>
     public BuildSettings? LastBuildSettings { get; private set; }
 
@@ -64,6 +67,7 @@ public sealed class FakeShellDialogs : IShellDialogs
     public Task<bool> ShowCropDialogAsync(CropSettings settings, string previewImagePath)
     {
         LastCropSettings = settings;
+        CropDialogAction?.Invoke(settings);
         return Task.FromResult(CropResult);
     }
 

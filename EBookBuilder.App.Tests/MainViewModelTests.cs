@@ -2,6 +2,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Lpubsppop01.EBookBuilder.App.Settings;
 using Lpubsppop01.EBookBuilder.App.ViewModels;
+using Lpubsppop01.EBookBuilder.Core.Imaging;
 
 namespace Lpubsppop01.EBookBuilder.App.Tests;
 
@@ -150,7 +151,7 @@ public class MainViewModelTests
 
     #endregion
 
-    #region Enabling and disabling single page operations
+    #region Enabling and disabling operations
 
     [AvaloniaFact]
     public void SinglePageOperationsAreDisabledWithoutAnyCheck()
@@ -167,7 +168,7 @@ public class MainViewModelTests
     }
 
     [AvaloniaFact]
-    public void CheckingExactlyOneEnablesSinglePageOperations()
+    public void CheckingExactlyOneEnablesEveryOperation()
     {
         using var pages = TestPages.Create(3);
         var viewModel = CreateViewModel(new FakeDialogService());
@@ -199,23 +200,28 @@ public class MainViewModelTests
     }
 
     [AvaloniaFact]
-    public void CheckingASecondPageDisablesSinglePageOperations()
+    public void CheckingASecondPageDisablesOperationsThatNeedASingleTarget()
     {
         using var pages = TestPages.Create(3);
         var viewModel = CreateViewModel(new FakeDialogService());
         viewModel.OpenDirectory(pages.Path);
 
         viewModel.Pages[0].IsChecked = true;
-        Assert.True(viewModel.CropCommand.CanExecute(null));
+        Assert.True(viewModel.DuplicateToNextCommand.CanExecute(null));
 
         // It crashed here
         viewModel.Pages[1].IsChecked = true;
 
-        Assert.False(viewModel.CropCommand.CanExecute(null));
+        Assert.False(viewModel.DuplicateToNextCommand.CanExecute(null));
+        Assert.False(viewModel.MoveToLastCommand.CanExecute(null));
+
+        // Delete and crop take every checked page as their target, so they stay usable
+        Assert.True(viewModel.DeleteCommand.CanExecute(null));
+        Assert.True(viewModel.CropCommand.CanExecute(null));
     }
 
     [AvaloniaFact]
-    public void SinglePageOperationsAreDisabledWithTwoOrMoreChecks()
+    public void OperationsThatNeedASingleTargetAreDisabledWithTwoOrMoreChecks()
     {
         using var pages = TestPages.Create(3);
         var viewModel = CreateViewModel(new FakeDialogService());
@@ -224,8 +230,11 @@ public class MainViewModelTests
         // Check everything, then re-query whether the commands can execute
         viewModel.CheckAllCommand.Execute(null);
 
-        Assert.False(viewModel.CropCommand.CanExecute(null));
-        Assert.False(viewModel.DeleteCommand.CanExecute(null));
+        Assert.False(viewModel.DuplicateToNextCommand.CanExecute(null));
+        Assert.False(viewModel.MoveToLastCommand.CanExecute(null));
+
+        Assert.True(viewModel.DeleteCommand.CanExecute(null));
+        Assert.True(viewModel.CropCommand.CanExecute(null));
     }
 
     [AvaloniaFact]
@@ -361,6 +370,72 @@ public class MainViewModelTests
         Assert.Empty(dialogs.Alerts);
     }
 
+    [AvaloniaFact]
+    public void ConfirmingDeletionRemovesEveryCheckedPage()
+    {
+        using var pages = TestPages.Create(4);
+        var dialogs = new FakeDialogService { ConfirmResult = true };
+        var viewModel = CreateViewModel(dialogs);
+        viewModel.OpenDirectory(pages.Path);
+        viewModel.Pages[1].IsChecked = true;
+        viewModel.Pages[2].IsChecked = true;
+
+        viewModel.DeleteCommand.Execute(null);
+
+        Assert.Equal(["0.jpg", "3.jpg"], viewModel.Pages.Select(page => page.Filename));
+        Assert.False(File.Exists(Path.Combine(pages.Path, "1.jpg")));
+        Assert.False(File.Exists(Path.Combine(pages.Path, "2.jpg")));
+        Assert.Empty(dialogs.Alerts);
+    }
+
+    [AvaloniaFact]
+    public void DeletingSeveralPagesAsksOnceAndNamesTheTargets()
+    {
+        using var pages = TestPages.Create(3);
+        var dialogs = new FakeDialogService { ConfirmResult = false };
+        var viewModel = CreateViewModel(dialogs);
+        viewModel.OpenDirectory(pages.Path);
+        viewModel.Pages[0].IsChecked = true;
+        viewModel.Pages[2].IsChecked = true;
+
+        viewModel.DeleteCommand.Execute(null);
+
+        var message = Assert.Single(dialogs.Confirms);
+        Assert.Contains("2 pages", message);
+        Assert.Contains("0.jpg", message);
+        Assert.Contains("2.jpg", message);
+        Assert.Equal(3, viewModel.Pages.Count);
+    }
+
+    [AvaloniaFact]
+    public void DeletingTheSelectedPageMovesTheSelection()
+    {
+        using var pages = TestPages.Create(3);
+        var viewModel = CreateViewModel(new FakeDialogService { ConfirmResult = true });
+        viewModel.OpenDirectory(pages.Path);
+        Assert.Equal("0.jpg", viewModel.SelectedPage?.Filename);
+
+        viewModel.Pages[0].IsChecked = true;
+        viewModel.DeleteCommand.Execute(null);
+
+        // The preview would have nothing to show if the selection stayed on the deleted page
+        Assert.Equal("1.jpg", viewModel.SelectedPage?.Filename);
+    }
+
+    [AvaloniaFact]
+    public void DeletingEveryPageLeavesNoSelection()
+    {
+        using var pages = TestPages.Create(2);
+        var viewModel = CreateViewModel(new FakeDialogService { ConfirmResult = true });
+        viewModel.OpenDirectory(pages.Path);
+        viewModel.CheckAllCommand.Execute(null);
+
+        viewModel.DeleteCommand.Execute(null);
+
+        Assert.Empty(viewModel.Pages);
+        Assert.Null(viewModel.SelectedPage);
+    }
+
     #endregion
 
     #region Serial renaming
@@ -384,6 +459,8 @@ public class MainViewModelTests
         Assert.Empty(dialogs.Alerts);
     }
 
+    #endregion
+
     #region Cropping
 
     [AvaloniaFact]
@@ -401,6 +478,7 @@ public class MainViewModelTests
         Assert.NotNull(shell.LastCropSettings);
         Assert.Equal(60, shell.LastCropSettings!.SourceSize.Width);
         Assert.Equal(90, shell.LastCropSettings.SourceSize.Height);
+        Assert.Equal(1, shell.LastCropSettings.TargetCount);
         Assert.Empty(dialogs.Alerts);
     }
 
@@ -419,7 +497,156 @@ public class MainViewModelTests
         Assert.Equal(["0.jpg", "1.jpg", "2.jpg"], viewModel.Pages.Select(page => page.Filename));
     }
 
-    #endregion
+    [AvaloniaFact]
+    public void CroppingSeveralPagesAppliesTheSameMarginsToAllOfThem()
+    {
+        using var pages = TestPages.Create(3, width: 60, height: 90);
+        var dialogs = new FakeDialogService();
+        var shell = new FakeShellDialogs
+        {
+            CropResult = true,
+            CropDialogAction = settings =>
+            {
+                settings.Left = 10;
+                settings.Top = 5;
+            },
+        };
+        var viewModel = CreateViewModel(dialogs, shell);
+        viewModel.OpenDirectory(pages.Path);
+        viewModel.Pages[1].IsChecked = true;
+        viewModel.Pages[2].IsChecked = true;
+
+        viewModel.CropCommand.Execute(null);
+
+        Assert.Equal(2, shell.LastCropSettings!.TargetCount);
+
+        // Both checked pages end up 60-10 x 90-5, and the unchecked one is left alone
+        foreach (var filename in new[] { "1.jpg", "2.jpg" })
+        {
+            Assert.Equal(
+                new ImageSize(50, 85),
+                PageImagePipeline.ReadOrientedSize(Path.Combine(pages.Path, filename)));
+        }
+        Assert.Equal(
+            new ImageSize(60, 90),
+            PageImagePipeline.ReadOrientedSize(Path.Combine(pages.Path, "0.jpg")));
+        Assert.Empty(dialogs.Alerts);
+    }
+
+    [AvaloniaFact]
+    public void CroppingPagesOfDifferentSizesIsAborted()
+    {
+        using var pages = TestPages.Create(3, width: 60, height: 90);
+        pages.WritePage("1.jpg", 100, 120);
+        var dialogs = new FakeDialogService();
+        var shell = new FakeShellDialogs { CropResult = true };
+        var viewModel = CreateViewModel(dialogs, shell);
+        viewModel.OpenDirectory(pages.Path);
+        viewModel.CheckAllCommand.Execute(null);
+
+        viewModel.CropCommand.Execute(null);
+
+        // The dialog is not even opened and nothing is rewritten
+        Assert.Null(shell.LastCropSettings);
+        Assert.Equal(0, shell.RunCount);
+
+        // The reason is reported grouped by size, naming the page that stands out. The difference
+        // from the reference is given in pixels and percent, so that the tolerance can be adjusted
+        // against what was actually scanned.
+        var message = Assert.Single(dialogs.Alerts);
+        Assert.Contains("60 x 90 (reference): 2 pages (0.jpg, 2.jpg)", message);
+        Assert.Contains("100 x 120 (40 pixels / 66.67% wider, 30 pixels / 33.33% taller): 1 page (1.jpg)", message);
+        Assert.Contains("up to 4 pixels or 1.5%", message);
+    }
+
+    [AvaloniaFact]
+    public void CroppingPagesThatDifferByAFewPixelsIsAccepted()
+    {
+        // The kind of difference a scan produces: the paper edge is detected a few pixels apart
+        using var pages = TestPages.Create(3, width: 60, height: 90);
+        pages.WritePage("1.jpg", 63, 90);
+        var dialogs = new FakeDialogService();
+        var shell = new FakeShellDialogs
+        {
+            CropResult = true,
+            CropDialogAction = settings =>
+            {
+                settings.Left = 10;
+                settings.Top = 5;
+            },
+        };
+        var viewModel = CreateViewModel(dialogs, shell);
+        viewModel.OpenDirectory(pages.Path);
+        viewModel.CheckAllCommand.Execute(null);
+
+        viewModel.CropCommand.Execute(null);
+
+        Assert.Empty(dialogs.Alerts);
+        Assert.Equal(3, shell.LastCropSettings!.TargetCount);
+        Assert.Equal(3, shell.LastCropSettings.SizeDifference);
+
+        // The margins are the same on every page, so the wider page stays wider
+        Assert.Equal(new ImageSize(50, 85), PageImagePipeline.ReadOrientedSize(Path.Combine(pages.Path, "0.jpg")));
+        Assert.Equal(new ImageSize(53, 85), PageImagePipeline.ReadOrientedSize(Path.Combine(pages.Path, "1.jpg")));
+    }
+
+    [AvaloniaFact]
+    public void CroppingPagesThatDifferByMoreThanTheMinimumIsAccepted()
+    {
+        // 10 pixels apart, which is 1% of the width: more than the fixed minimum, but within the
+        // ratio. The pages of a real scan came out about this far apart.
+        using var pages = TestPages.Create(2, width: 1000, height: 1400);
+        pages.WritePage("1.jpg", 1010, 1400);
+        var dialogs = new FakeDialogService();
+        var shell = new FakeShellDialogs
+        {
+            CropResult = true,
+            CropDialogAction = settings => settings.Left = 10,
+        };
+        var viewModel = CreateViewModel(dialogs, shell);
+        viewModel.OpenDirectory(pages.Path);
+        viewModel.CheckAllCommand.Execute(null);
+
+        viewModel.CropCommand.Execute(null);
+
+        Assert.Empty(dialogs.Alerts);
+        Assert.Equal(10, shell.LastCropSettings!.SizeDifference);
+
+        // The same margins are removed from both, so the wider page stays wider
+        Assert.Equal(new ImageSize(990, 1400), PageImagePipeline.ReadOrientedSize(Path.Combine(pages.Path, "0.jpg")));
+        Assert.Equal(new ImageSize(1000, 1400), PageImagePipeline.ReadOrientedSize(Path.Combine(pages.Path, "1.jpg")));
+    }
+
+    [AvaloniaFact]
+    public void MarginsTooLargeForTheSmallestPageAreRejectedBeforeCropping()
+    {
+        // The margins fit the page the preview shows, but not the slightly smaller one beside it.
+        // Without checking every target this would fail partway and crop only some of the pages.
+        using var pages = TestPages.Create(2, width: 60, height: 90);
+        pages.WritePage("0.jpg", 63, 90);   // the previewed page is the larger one
+        var dialogs = new FakeDialogService();
+        var shell = new FakeShellDialogs
+        {
+            CropResult = true,
+            CropDialogAction = settings =>
+            {
+                settings.Left = 30;
+                settings.Right = 30;
+            },
+        };
+        var viewModel = CreateViewModel(dialogs, shell);
+        viewModel.OpenDirectory(pages.Path);
+        viewModel.CheckAllCommand.Execute(null);
+
+        viewModel.CropCommand.Execute(null);
+
+        Assert.Equal("The margins are too large.", Assert.Single(dialogs.Alerts));
+        Assert.Equal(0, shell.RunCount);
+
+        // Neither page was touched
+        Assert.Equal(new ImageSize(63, 90), PageImagePipeline.ReadOrientedSize(Path.Combine(pages.Path, "0.jpg")));
+        Assert.Equal(new ImageSize(60, 90), PageImagePipeline.ReadOrientedSize(Path.Combine(pages.Path, "1.jpg")));
+    }
 
     #endregion
 }

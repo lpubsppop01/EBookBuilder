@@ -136,6 +136,31 @@ public class DialogConstructionTests
     }
 
     [AvaloniaFact]
+    public void CropDialogSaysHowManyPagesTheMarginsAreAppliedTo()
+    {
+        using var pages = TestPages.Create(1, width: 60, height: 90);
+        var settings = new CropSettings { SourceSize = new ImageSize(60, 90) };
+        var dialog = new CropDialog(settings, Path.Combine(pages.Path, "0.jpg"));
+        dialog.Show();
+
+        // A single page is the ordinary case, so nothing is said about it
+        var notice = dialog.FindControl<TextBlock>("ctrlSeveralPagesNotice")!;
+        Assert.False(notice.IsVisible);
+
+        settings.TargetCount = 3;
+
+        Assert.True(notice.IsVisible);
+        Assert.Contains("applied to 3 pages", notice.Text);
+
+        // The sizes are not always exactly equal, so how far they differ is reported as well
+        settings.SizeDifference = 3;
+
+        Assert.Contains("up to 3 pixels", notice.Text);
+
+        dialog.Close();
+    }
+
+    [AvaloniaFact]
     public void CropDialogMasksCoverAllFourCorners()
     {
         using var pages = TestPages.Create(1, width: 60, height: 90);

@@ -12,6 +12,8 @@ public sealed class CropSettings : ObservableObject
     int m_Right;
     ImageSize m_SourceSize;
     WriteableBitmap? m_PreviewImage;
+    int m_TargetCount = 1;
+    int m_SizeDifference;
 
     /// <summary>The preview image for verification.</summary>
     public WriteableBitmap? PreviewImage
@@ -66,8 +68,59 @@ public sealed class CropSettings : ObservableObject
     /// <summary>Height remaining after cropping.</summary>
     public int CropHeight => Math.Max(0, m_SourceSize.Height - m_Top - m_Bottom);
 
-    /// <summary>Whether any area remains after cropping.</summary>
-    public bool IsValid => CropWidth > 0 && CropHeight > 0;
+    /// <summary>Whether an area remains after removing the margins from an image of the given size.</summary>
+    /// <remarks>
+    /// The margins have to be checked against every target, because the targets are not always
+    /// exactly the same size (see <see cref="CropSizeTolerance"/> in the core library).
+    /// </remarks>
+    public bool LeavesAreaOn(ImageSize size) =>
+        size.Width - (m_Left + m_Right) > 0 && size.Height - (m_Top + m_Bottom) > 0;
+
+    /// <summary>The number of pages the same margins are applied to.</summary>
+    /// <remarks>
+    /// Only one page is shown in the preview, so when several are checked the dialog says so.
+    /// </remarks>
+    public int TargetCount
+    {
+        get => m_TargetCount;
+        set
+        {
+            if (!SetProperty(ref m_TargetCount, value)) return;
+            OnPropertyChanged(nameof(AppliesToSeveralPages));
+            OnPropertyChanged(nameof(SeveralPagesNotice));
+        }
+    }
+
+    /// <summary>The largest difference in pixels between the target sizes. 0 when they are all equal.</summary>
+    public int SizeDifference
+    {
+        get => m_SizeDifference;
+        set
+        {
+            if (!SetProperty(ref m_SizeDifference, value)) return;
+            OnPropertyChanged(nameof(SeveralPagesNotice));
+        }
+    }
+
+    /// <summary>Whether the margins are applied to more than one page.</summary>
+    public bool AppliesToSeveralPages => m_TargetCount > 1;
+
+    /// <summary>The notice shown when several pages are the target. Empty when there is only one.</summary>
+    public string SeveralPagesNotice
+    {
+        get
+        {
+            if (!AppliesToSeveralPages) return "";
+
+            var notice = $"The same margins will be applied to {m_TargetCount} pages."
+                + " The preview shows the first one.";
+            if (m_SizeDifference > 0)
+            {
+                notice += $" The pages differ by up to {m_SizeDifference} pixels in size.";
+            }
+            return notice;
+        }
+    }
 
     /// <summary>Resets all margins to 0.</summary>
     public void Reset()
@@ -85,6 +138,5 @@ public sealed class CropSettings : ObservableObject
         OnPropertyChanged();
         OnPropertyChanged(nameof(CropWidth));
         OnPropertyChanged(nameof(CropHeight));
-        OnPropertyChanged(nameof(IsValid));
     }
 }
