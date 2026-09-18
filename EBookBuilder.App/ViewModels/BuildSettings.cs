@@ -6,7 +6,13 @@ namespace Lpubsppop01.EBookBuilder.App.ViewModels;
 /// <summary>The contents of the build dialog.</summary>
 public sealed class BuildSettings : ObservableObject
 {
+    /// <summary>The extensions the output name is allowed to be renamed from.</summary>
+    /// <remarks>A name ending in one of these is taken to be one we chose, not one the user typed.</remarks>
+    static readonly string[] KnownContainerExtensions = [".cbz", ".zip", ".pdf"];
+
     string m_OutputFilePath = "";
+    BuildContainerKind m_ContainerKind = BuildContainerKind.Cbz;
+    int m_PdfPageDpi = BuildOptions.DefaultPdfPageDpi;
     BuildImageFormatKind m_ImageFormatKind = BuildImageFormatKind.Jpeg;
     BuildSizeKind m_SizeKind = BuildSizeKind.Original;
     int m_Width = 600;
@@ -19,6 +25,25 @@ public sealed class BuildSettings : ObservableObject
     {
         get => m_OutputFilePath;
         set => SetProperty(ref m_OutputFilePath, value);
+    }
+
+    /// <summary>The container to write the pages into.</summary>
+    public BuildContainerKind ContainerKind
+    {
+        get => m_ContainerKind;
+        set
+        {
+            if (!SetProperty(ref m_ContainerKind, value)) return;
+            FollowContainerExtension(value);
+            OnContainerChanged();
+        }
+    }
+
+    /// <summary>The resolution the PDF pages are given.</summary>
+    public int PdfPageDpi
+    {
+        get => m_PdfPageDpi;
+        set => SetProperty(ref m_PdfPageDpi, value);
     }
 
     /// <summary>The image format to output.</summary>
@@ -75,6 +100,25 @@ public sealed class BuildSettings : ObservableObject
     /// <summary>Whether the width and height inputs are enabled.</summary>
     public bool IsSizeSpecified => SizeKind == BuildSizeKind.Specified;
 
+    /// <summary>The extension a container uses.</summary>
+    public static string DefaultExtensionFor(BuildContainerKind containerKind) =>
+        containerKind == BuildContainerKind.Pdf ? ".pdf" : ".cbz";
+
+    /// <summary>The output path to suggest for a folder, before the user has chosen anything.</summary>
+    public static string DefaultOutputFilePath(string targetDirectoryPath, BuildContainerKind containerKind) =>
+        targetDirectoryPath + DefaultExtensionFor(containerKind);
+
+    /// <summary>
+    /// Whether the image format can be chosen.
+    /// </summary>
+    /// <remarks>
+    /// PDF has no PNG image type, so the choice does not apply to it.
+    /// </remarks>
+    public bool IsImageFormatSpecified => ContainerKind == BuildContainerKind.Cbz;
+
+    /// <summary>Whether the page resolution can be chosen. It only means something for a PDF.</summary>
+    public bool IsPdfPageDpiSpecified => ContainerKind == BuildContainerKind.Pdf;
+
     /// <summary>
     /// Whether specifying the quality has any meaning.
     /// </summary>
@@ -96,8 +140,13 @@ public sealed class BuildSettings : ObservableObject
         get
         {
             if (ToBuildOptions().CanCopyWithoutReEncoding)
-                return "Packages the images as they are without re-encoding. The image quality does not change.";
+                return ContainerKind == BuildContainerKind.Pdf
+                    ? "Embeds the images as they are without re-encoding. The image quality does not change."
+                    : "Packages the images as they are without re-encoding. The image quality does not change.";
 
+            // Only PNG reaches this line, at the original size with no dots: JPEG would have taken
+            // the copy path above. A PDF is always JPEG and is covered by that same path, so a PDF
+            // never gets told it is being converted to PNG.
             if (SizeKind == BuildSizeKind.Original && !DrawsCornerDots)
                 return "Re-encodes to convert to PNG.";
 
@@ -115,12 +164,33 @@ public sealed class BuildSettings : ObservableObject
     public BuildOptions ToBuildOptions() => new()
     {
         OutputFilePath = OutputFilePath,
-        ImageFormatKind = ImageFormatKind,
+        ContainerKind = ContainerKind,
+        // A PDF stores JPEG page images, so the format chosen for a CBZ does not apply to it.
+        // The setting itself is left alone, so switching back to CBZ restores the user's choice.
+        ImageFormatKind = ContainerKind == BuildContainerKind.Pdf ? BuildImageFormatKind.Jpeg : ImageFormatKind,
         SizeKind = SizeKind,
         TargetSize = new ImageSize(Width, Height),
         DrawsCornerDots = DrawsCornerDots,
         JpegQuality = JpegQuality,
+        PdfPageDpi = PdfPageDpi,
     };
+
+    /// <summary>
+    /// Renames the output to match the container, when the name still looks like the one we chose.
+    /// </summary>
+    /// <remarks>
+    /// A name the user typed is left alone. Without this, switching to PDF would leave a ZIP
+    /// sitting under a <c>.pdf</c> name.
+    /// </remarks>
+    void FollowContainerExtension(BuildContainerKind containerKind)
+    {
+        if (string.IsNullOrEmpty(m_OutputFilePath)) return;
+
+        var extension = Path.GetExtension(m_OutputFilePath);
+        if (!KnownContainerExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase)) return;
+
+        OutputFilePath = Path.ChangeExtension(m_OutputFilePath, DefaultExtensionFor(containerKind));
+    }
 
     /// <summary>Notifies all at once for the properties determined by the combination of settings.</summary>
     void OnOutputSettingsChanged()
@@ -128,5 +198,17 @@ public sealed class BuildSettings : ObservableObject
         OnPropertyChanged(nameof(IsSizeSpecified));
         OnPropertyChanged(nameof(IsJpegQualitySpecified));
         OnPropertyChanged(nameof(OutputFormatDescription));
+    }
+
+    /// <summary>Notifies for the properties determined by the container.</summary>
+    /// <remarks>
+    /// The description is raised again here even though <see cref="BuildOptions.CanCopyWithoutReEncoding"/>
+    /// does not change with the container, because the sentence it produces does.
+    /// </remarks>
+    void OnContainerChanged()
+    {
+        OnOutputSettingsChanged();
+        OnPropertyChanged(nameof(IsImageFormatSpecified));
+        OnPropertyChanged(nameof(IsPdfPageDpiSpecified));
     }
 }

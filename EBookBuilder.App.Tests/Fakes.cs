@@ -58,6 +58,9 @@ public sealed class FakeShellDialogs : IShellDialogs
     /// <summary>The settings passed to the build dialog.</summary>
     public BuildSettings? LastBuildSettings { get; private set; }
 
+    /// <summary>Applied to the settings when the build dialog is shown (simulates the user changing them).</summary>
+    public Action<BuildSettings>? BuildDialogAction { get; set; }
+
     /// <summary>The number of times the progress dialog was shown.</summary>
     public int RunCount { get; private set; }
 
@@ -74,6 +77,7 @@ public sealed class FakeShellDialogs : IShellDialogs
     public Task<bool> ShowBuildDialogAsync(BuildSettings settings)
     {
         LastBuildSettings = settings;
+        BuildDialogAction?.Invoke(settings);
         return Task.FromResult(BuildResult);
     }
 

@@ -38,17 +38,31 @@
     </Window.Styles>
 
     <Grid Margin="6"
-          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
           ColumnDefinitions="Auto,*">
 
-        <TextBlock Grid.Row="0" Grid.Column="0">Output</TextBlock>
-        <DockPanel Grid.Row="0" Grid.Column="1">
+        <TextBlock Grid.Row="0" Grid.Column="0">Container</TextBlock>
+        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+            <RadioButton GroupName="Container" Content="CBZ"
+                         IsChecked="{Binding ContainerKind,
+                                     Converter={StaticResource EnumToBoolConverter},
+                                     ConverterParameter=Cbz}"/>
+            <RadioButton GroupName="Container" Content="PDF"
+                         IsChecked="{Binding ContainerKind,
+                                     Converter={StaticResource EnumToBoolConverter},
+                                     ConverterParameter=Pdf}"/>
+        </StackPanel>
+
+        <TextBlock Grid.Row="1" Grid.Column="0">Output</TextBlock>
+        <DockPanel Grid.Row="1" Grid.Column="1">
             <Button DockPanel.Dock="Right" Padding="8,2" Click="Browse_Click" Content="..."/>
             <TextBox Text="{Binding OutputFilePath}"/>
         </DockPanel>
 
-        <TextBlock Grid.Row="1" Grid.Column="0">Format</TextBlock>
-        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+        <TextBlock Grid.Row="2" Grid.Column="0">Format</TextBlock>
+        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal"
+                    x:Name="ctrlImageFormatRow"
+                    IsEnabled="{Binding IsImageFormatSpecified}">
             <RadioButton GroupName="ImageFormat" Content="JPEG"
                          IsChecked="{Binding ImageFormatKind,
                                      Converter={StaticResource EnumToBoolConverter},
@@ -59,8 +73,8 @@
                                      ConverterParameter=Png}"/>
         </StackPanel>
 
-        <TextBlock Grid.Row="2" Grid.Column="0">Size</TextBlock>
-        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+        <TextBlock Grid.Row="3" Grid.Column="0">Size</TextBlock>
+        <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal">
             <RadioButton GroupName="SizeKind" Content="Original"
                          IsChecked="{Binding SizeKind,
                                      Converter={StaticResource EnumToBoolConverter},
@@ -71,8 +85,8 @@
                                      ConverterParameter=Specified}"/>
         </StackPanel>
 
-        <TextBlock Grid.Row="3" Grid.Column="0">Width x Height</TextBlock>
-        <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal">
+        <TextBlock Grid.Row="4" Grid.Column="0">Width x Height</TextBlock>
+        <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal">
             <NumericUpDown Value="{Binding Width}" Minimum="1" Maximum="100000"
                            IsEnabled="{Binding IsSizeSpecified}" Width="140"/>
             <TextBlock>x</TextBlock>
@@ -80,20 +94,28 @@
                            IsEnabled="{Binding IsSizeSpecified}" Width="140"/>
         </StackPanel>
 
-        <TextBlock Grid.Row="4" Grid.Column="0">JPEG Quality</TextBlock>
-        <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal"
+        <TextBlock Grid.Row="5" Grid.Column="0">JPEG Quality</TextBlock>
+        <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal"
                     IsEnabled="{Binding IsJpegQualitySpecified}">
             <Slider Value="{Binding JpegQuality}" Minimum="1" Maximum="100"
                     Width="260" TickFrequency="1" IsSnapToTickEnabled="True"/>
             <TextBlock Text="{Binding JpegQuality}" MinWidth="40"/>
         </StackPanel>
 
-        <TextBlock Grid.Row="5" Grid.Column="0">Options</TextBlock>
-        <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal">
+        <TextBlock Grid.Row="6" Grid.Column="0">Options</TextBlock>
+        <StackPanel Grid.Row="6" Grid.Column="1" Orientation="Horizontal">
             <CheckBox Content="Corner Dots" IsChecked="{Binding DrawsCornerDots}"/>
         </StackPanel>
 
-        <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2">
+        <TextBlock Grid.Row="7" Grid.Column="0">Page DPI</TextBlock>
+        <StackPanel Grid.Row="7" Grid.Column="1" Orientation="Horizontal"
+                    IsEnabled="{Binding IsPdfPageDpiSpecified}">
+            <NumericUpDown x:Name="ctrlPageDpi" Value="{Binding PdfPageDpi}"
+                           Minimum="18" Maximum="2400" Width="140"/>
+            <TextBlock Text="(the physical size the PDF pages are given)"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2">
             <TextBlock Text="{Binding OutputFormatDescription}" TextWrapping="Wrap" Foreground="Gray"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
                 <Button Content="OK" Click="Ok_Click" IsDefault="True" MinWidth="90"/>

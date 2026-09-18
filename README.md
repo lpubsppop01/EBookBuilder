@@ -1,6 +1,6 @@
 # EBookBuilder
 
-A tool to view scanned book page images side by side, rotate, crop and rename them to serial numbers, and write them out as a CBZ.
+A tool to view scanned book page images side by side, rotate, crop and rename them to serial numbers, and write them out as a CBZ or a PDF.
 
 It was originally a Windows-only WPF (.NET Framework 4.8.1) application, and was ported to Avalonia UI + .NET 10 so that it runs on both Linux and Windows.
 The version before the port can be taken from the `wpf-final` tag.
@@ -11,6 +11,10 @@ The version before the port can be taken from the `wpf-final` tag.
   No re-encode occurs, so the image quality stays as it was no matter how many times a page is rotated.
 - **Building is essentially lossless too.** When the size is left original, corner dots are off and the output is JPEG,
   the files are packaged into the CBZ byte for byte as they are (no re-encode).
+- **A PDF can be written without losing any of that.** Each page is stored in the PDF as the JPEG it already is
+  (`DCTDecode`), so nothing is re-encoded and the file comes out about the same size as the CBZ.
+  Rotation is written as the placement of the page rather than into the pixels, so a rotated page is not re-encoded either.
+  The pages are written in page order, and no third-party PDF library is involved, so the same pages always produce the same file.
 - **Page order is reliable.** Pages are sorted in the ordinal order of their file names, and the CBZ entries are written in that order.
 - Checking while looking at the preview, checking odd/even pages in bulk,
   and per-page duplication, move to end, deletion and cropping.
@@ -66,14 +70,18 @@ ebookbuilder-cli rename --dir <folder>
 ebookbuilder-cli move   --dir <folder> --index <n>
 ebookbuilder-cli delete --dir <folder> --index <n>
 ebookbuilder-cli build  --dir <folder> --out <output path>
-                    [--format <jpeg|png>] [--size <original|width x height>] [--dots] [--quality <1-100>]
+                    [--container <cbz|pdf>] [--format <jpeg|png>] [--size <original|width x height>]
+                    [--dots] [--quality <1-100>] [--dpi <n>]
 ```
+
+`--format png` cannot be combined with `--container pdf`: a PDF stores JPEG page images.
+`--dpi` (default 300) only affects the physical size the PDF pages are given.
 
 ## Layout
 
 | Project | Role |
 | --- | --- |
-| `EBookBuilder.Core` | Processing that does not depend on the UI. EXIF orientation, image processing, serial numbers, CBZ assembly |
+| `EBookBuilder.Core` | Processing that does not depend on the UI. EXIF orientation, image processing, serial numbers, CBZ and PDF assembly |
 | `EBookBuilder.App` | GUI built with Avalonia |
 | `EBookBuilder.Cli` | Command line |
 | `EBookBuilder.Core.Tests` | Tests for the core processing |
@@ -88,6 +96,10 @@ Deliberate differences from the original WPF version.
 
 - **No re-encode when building at the original size.** The original always re-encoded at JPEG quality 75 even when
   the original size was specified, and the image quality dropped with every build. It is now copied.
+- **A PDF can be written as well.** PDF always stores JPEG page images: it has no PNG image type, and re-compressing
+  a JPEG losslessly would only make the file several times larger for no gain in quality, so the PNG choice does not
+  apply to a PDF and the format is fixed to JPEG. Pages are given a physical size from the page resolution setting
+  (default 300 dpi), because a PDF page has to state one; the reader's fit-to-window does not depend on it.
 - **The JPEG quality can be specified.** The default is 90 (the original was fixed at 75 and did not expose it in the UI either).
   When the settings say not to re-encode, however, specifying it does not change the result, so the input field is disabled.
 - **Build targets the whole folder.** It can be run regardless of how many pages are checked (the original did not require a single selection either).
@@ -123,6 +135,11 @@ Deliberate differences from the original WPF version.
 - Rotation is expressed by the EXIF orientation tag, so **viewers that do not interpret EXIF do not reflect the rotation.**
   This has been the design since before the port. Most CBZ viewers interpret EXIF, but
   when using one that does not, the orientation has to be baked in from the start.
+  (This does not apply to a PDF: a PDF page has no orientation tag, so the rotation is written into the page itself.)
+- **The physical size of a PDF page is an estimate.** It comes from the page resolution setting, not from any
+  measurement of the paper that was scanned, so it is only as good as that setting.
+- **A CMYK JPEG cannot be stored as it is.** A PDF would need an inverted decode array for it, so such a page is
+  re-encoded instead. It is still counted as re-encoded in the result, so the report stays honest.
 
 ## Author
 

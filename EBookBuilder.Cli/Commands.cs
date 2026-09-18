@@ -169,10 +169,10 @@ public static class Commands
         return Task.FromResult(0);
     }
 
-    /// <summary>Writes a CBZ file.</summary>
+    /// <summary>Writes a CBZ or a PDF file.</summary>
     public static async Task<int> Build(ArgumentReader args)
     {
-        args.RejectUnknown("dir", "out", "format", "size", "dots", "quality");
+        args.RejectUnknown("dir", "out", "format", "size", "dots", "quality", "container", "dpi");
         var directoryPath = args.RequireValue("dir");
         RequireDirectory(directoryPath);
 
@@ -184,16 +184,31 @@ public static class Commands
             var other => throw new ArgumentException($"--format must be one of jpeg / png: {other}"),
         };
 
+        // The container is named outright rather than guessed from the output extension, so that a
+        // combination that cannot be built can be reported as such instead of quietly changing.
+        var container = args.GetValue("container")?.ToLowerInvariant() switch
+        {
+            null or "cbz" => BuildContainerKind.Cbz,
+            "pdf" => BuildContainerKind.Pdf,
+            var other => throw new ArgumentException($"--container must be one of cbz / pdf: {other}"),
+        };
+
+        if (container == BuildContainerKind.Pdf && format == BuildImageFormatKind.Png)
+            throw new ArgumentException(
+                "--format png cannot be combined with --container pdf (a PDF stores JPEG page images).");
+
         var (sizeKind, targetSize) = ParseSize(args.GetValue("size"));
 
         var options = new BuildOptions
         {
             OutputFilePath = outputFilePath,
+            ContainerKind = container,
             ImageFormatKind = format,
             SizeKind = sizeKind,
             TargetSize = targetSize,
             DrawsCornerDots = args.HasFlag("dots"),
             JpegQuality = args.GetInt("quality", PageImagePipeline.DefaultJpegQuality),
+            PdfPageDpi = args.GetInt("dpi", BuildOptions.DefaultPdfPageDpi),
         };
 
         var filenames = PageFolder.EnumeratePageFilenames(directoryPath);
@@ -204,7 +219,7 @@ public static class Commands
         }
 
         var progress = new ConsoleProgress("Processing");
-        var result = await CbzBuilder.BuildAsync(directoryPath, filenames, options, progress);
+        var result = await BookBuilder.BuildAsync(directoryPath, filenames, options, progress);
         progress.Complete();
 
         Console.WriteLine($"Created {result.OutputFilePath}.");

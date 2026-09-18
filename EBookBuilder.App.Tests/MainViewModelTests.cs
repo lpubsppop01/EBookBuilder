@@ -2,6 +2,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Lpubsppop01.EBookBuilder.App.Settings;
 using Lpubsppop01.EBookBuilder.App.ViewModels;
+using Lpubsppop01.EBookBuilder.Core.Build;
 using Lpubsppop01.EBookBuilder.Core.Imaging;
 
 namespace Lpubsppop01.EBookBuilder.App.Tests;
@@ -326,6 +327,49 @@ public class MainViewModelTests
 
             using var zip = System.IO.Compression.ZipFile.OpenRead(outputFilePath);
             Assert.Equal(["0.jpg", "1.jpg", "2.jpg"], zip.Entries.Select(entry => entry.FullName));
+
+            Assert.Contains(dialogs.Alerts, message => message.Contains("Created"));
+        }
+        finally
+        {
+            if (File.Exists(outputFilePath)) File.Delete(outputFilePath);
+        }
+    }
+
+    /// <summary>
+    /// The container chosen last time is remembered, and the output name follows it, so a PDF is
+    /// not written under the name of a CBZ.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task BuildingProducesAPdfWhenPdfWasChosenLastTime()
+    {
+        using var pages = TestPages.Create(3);
+        var dialogs = new FakeDialogService();
+        var shell = new FakeShellDialogs { BuildResult = true };
+
+        var settings = new AppSettings(Path.Combine(pages.Path, "settings.json"))
+        {
+            ContainerKind = BuildContainerKind.Pdf,
+        };
+        var viewModel = new MainViewModel(new FakeFolderPicker(), dialogs, shell, settings);
+        viewModel.OpenDirectory(pages.Path);
+
+        var outputFilePath = pages.Path + ".pdf";
+        try
+        {
+            viewModel.BuildCommand.Execute(null);
+
+            for (var i = 0; i < 300 && !File.Exists(outputFilePath); ++i)
+            {
+                Dispatcher.UIThread.RunJobs();
+                await Task.Delay(10);
+            }
+
+            Assert.True(File.Exists(outputFilePath), "the PDF was not created");
+            Assert.Equal(BuildContainerKind.Pdf, shell.LastBuildSettings!.ContainerKind);
+
+            var bytes = File.ReadAllBytes(outputFilePath);
+            Assert.Equal("%PDF-", System.Text.Encoding.ASCII.GetString(bytes, 0, 5));
 
             Assert.Contains(dialogs.Alerts, message => message.Contains("Created"));
         }

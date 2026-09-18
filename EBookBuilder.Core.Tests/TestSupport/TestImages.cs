@@ -31,6 +31,27 @@ internal static class TestImages
         data.SaveTo(stream);
     }
 
+    /// <summary>
+    /// Writes a grayscale JPEG that is black on the left and white on the right.
+    /// </summary>
+    /// <remarks>
+    /// A grayscale JPEG stores one component rather than three, which a reader has to be told about
+    /// or it shows the page in the wrong colours.
+    /// </remarks>
+    public static void WriteGrayJpeg(string path, int width, int height, int quality = 100)
+    {
+        using var bitmap = new SKBitmap(new SKImageInfo(width, height, SKColorType.Gray8, SKAlphaType.Opaque));
+        using (var canvas = new SKCanvas(bitmap))
+        {
+            canvas.Clear(SKColors.White);
+            canvas.DrawRect(new SKRect(0, 0, width / 2f, height), new SKPaint { Color = SKColors.Black });
+        }
+        using var image = SKImage.FromBitmap(bitmap);
+        using var data = image.Encode(SKEncodedImageFormat.Jpeg, quality);
+        using var stream = File.Create(path);
+        data.SaveTo(stream);
+    }
+
     /// <summary>Hash of the file bytes. Used to tell pages apart.</summary>
     public static string ContentHash(string path) =>
         Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path)));

@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -5,6 +6,7 @@ using Lpubsppop01.EBookBuilder.App.Settings;
 using Lpubsppop01.EBookBuilder.App.ViewModels;
 using Lpubsppop01.EBookBuilder.App.Views;
 using Lpubsppop01.EBookBuilder.Core;
+using Lpubsppop01.EBookBuilder.Core.Build;
 using Lpubsppop01.EBookBuilder.Core.Imaging;
 
 // Importing the whole Shapes namespace would collide with System.IO.Path, so only the types used are aliased in.
@@ -193,6 +195,56 @@ public class DialogConstructionTests
         var dialog = new BuildDialog(settings, new FakeDialogService(), "/tmp");
 
         Assert.Equal(settings, dialog.DataContext);
+    }
+
+    /// <summary>
+    /// PDF stores JPEG page images and has no PNG ones, and the page resolution only means
+    /// something for a PDF, so each control is offered only where it applies.
+    /// </summary>
+    [AvaloniaFact]
+    public void BuildDialogOffersEachSettingOnlyWhereItApplies()
+    {
+        var settings = new BuildSettings { OutputFilePath = "/tmp/out.cbz" };
+        var dialog = new BuildDialog(settings, new FakeDialogService(), "/tmp");
+        dialog.Show();
+
+        var imageFormatRow = dialog.FindControl<StackPanel>("ctrlImageFormatRow")!;
+        // IsEnabled is what the binding sets on the row; IsEffectivelyEnabled is what the control
+        // inside it ends up with, and so what decides whether the user can actually type in it.
+        var pageDpi = dialog.FindControl<NumericUpDown>("ctrlPageDpi")!;
+
+        Assert.True(imageFormatRow.IsEnabled);
+        Assert.False(pageDpi.IsEffectivelyEnabled);
+
+        settings.ContainerKind = BuildContainerKind.Pdf;
+
+        Assert.False(imageFormatRow.IsEnabled);
+        Assert.True(pageDpi.IsEffectivelyEnabled);
+
+        dialog.Close();
+    }
+
+    /// <summary>
+    /// The window sizes itself to its contents, so a row added to the grid has to be measured
+    /// rather than assumed: a taller grid would otherwise run off the bottom of the window.
+    /// </summary>
+    [AvaloniaFact]
+    public void BuildDialogLaysOutEveryRowInsideTheWindow()
+    {
+        var settings = new BuildSettings { OutputFilePath = "/tmp/out.cbz" };
+        var dialog = new BuildDialog(settings, new FakeDialogService(), "/tmp");
+        dialog.Show();
+
+        var pageDpi = dialog.FindControl<NumericUpDown>("ctrlPageDpi")!;
+        var bottom = pageDpi.TranslatePoint(new Point(0, pageDpi.Bounds.Height), dialog)!.Value.Y;
+
+        Assert.True(pageDpi.Bounds.Height > 0, "the page resolution input was not laid out");
+        Assert.True(pageDpi.Bounds.Width > 0, "the page resolution input has no width");
+        Assert.True(
+            bottom <= dialog.ClientSize.Height,
+            $"the page resolution row ends at {bottom} in a window {dialog.ClientSize.Height} tall");
+
+        dialog.Close();
     }
 
     [AvaloniaFact]
