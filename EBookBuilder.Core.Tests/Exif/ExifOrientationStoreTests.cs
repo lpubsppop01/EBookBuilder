@@ -1,5 +1,6 @@
 using Lpubsppop01.EBookBuilder.Core.Exif;
 using Lpubsppop01.EBookBuilder.Core.Tests.TestSupport;
+using SkiaSharp;
 
 namespace Lpubsppop01.EBookBuilder.Core.Tests.Exif;
 
@@ -30,6 +31,38 @@ public class ExifOrientationStoreTests
         using var jpeg = TempJpeg.Create();
         ExifOrientationStore.Write(jpeg.Path, orientation);
         Assert.Equal(orientation, ExifOrientationStore.Read(jpeg.Path));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void RotationIsEffectiveOnFilesThatAlreadyHaveAnExifBlock(bool bigEndian)
+    {
+        // Pages that come from a camera or a scanner already carry an EXIF block, and its byte
+        // order is often big-endian. Files this app gives a block to get a little-endian one,
+        // which is why the round trip above can pass while rotation does nothing in the field.
+        using var jpeg = TempJpeg.CreateWithExif(bigEndian);
+
+        ExifOrientationStore.Write(jpeg.Path, ExifOrientation.Rotate90CW);
+
+        Assert.Equal(ExifOrientation.Rotate90CW, ExifOrientationStore.Read(jpeg.Path));
+        Assert.Equal(SKEncodedOrigin.RightTop, TestImages.ReadEncodedOrigin(jpeg.Path));
+    }
+
+    [Fact]
+    public void RotationsAccumulateOnFilesThatAlreadyHaveAnExifBlock()
+    {
+        using var jpeg = TempJpeg.CreateWithExif();
+
+        var orientation = ExifOrientationStore.Read(jpeg.Path);
+        for (var i = 0; i < 2; ++i)
+        {
+            orientation = orientation.Rotated90();
+            ExifOrientationStore.Write(jpeg.Path, orientation);
+        }
+
+        Assert.Equal(ExifOrientation.Rotate180, ExifOrientationStore.Read(jpeg.Path));
+        Assert.Equal(SKEncodedOrigin.BottomRight, TestImages.ReadEncodedOrigin(jpeg.Path));
     }
 
     [Fact]

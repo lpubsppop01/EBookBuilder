@@ -32,6 +32,84 @@ internal static class TestImages
     }
 
     /// <summary>
+    /// Writes a two-tone JPEG that already carries an EXIF block, the way a file straight from a
+    /// camera or a scanner does.
+    /// </summary>
+    /// <param name="bigEndian">
+    /// Byte order of the EXIF block. Camera and scanner output is often big-endian
+    /// (<c>MM</c>), while the block this app writes for a file that has none is little-endian
+    /// (<c>II</c>).
+    /// </param>
+    /// <remarks>
+    /// Rewriting the orientation keeps the byte order of the block that is already in the file,
+    /// so both orders have to work. The tag starts out as Orientation 1 (horizontal normal),
+    /// which is what a freshly scanned page has.
+    /// </remarks>
+    public static void WriteTwoToneJpegWithExif(
+        string path,
+        int width,
+        int height,
+        bool bigEndian = true,
+        int quality = 100)
+    {
+        WriteTwoToneJpeg(path, width, height, quality);
+
+        var jpeg = File.ReadAllBytes(path);
+        var exif = BuildExifSegmentWithOrientation(bigEndian);
+
+        // APP1 goes after SOI, and after APP0 when there is one, which is the order camera
+        // files use.
+        var insertAt = jpeg.Length >= 6 && jpeg[2] == 0xFF && jpeg[3] == 0xE0
+            ? 4 + ((jpeg[4] << 8) | jpeg[5])
+            : 2;
+
+        using var output = File.Create(path);
+        output.Write(jpeg, 0, insertAt);
+        output.Write(exif);
+        output.Write(jpeg, insertAt, jpeg.Length - insertAt);
+    }
+
+    /// <summary>Builds an APP1 (EXIF) segment holding only an Orientation tag with the value 1.</summary>
+    static byte[] BuildExifSegmentWithOrientation(bool bigEndian)
+    {
+        var body = new List<byte>();
+        body.AddRange("Exif"u8.ToArray());
+        body.AddRange([0x00, 0x00]);
+
+        // TIFF header: byte order, magic number 42, and the offset of IFD0.
+        body.AddRange(bigEndian ? "MM"u8.ToArray() : "II"u8.ToArray());
+        AddUInt16(body, 42, bigEndian);
+        AddUInt32(body, 8, bigEndian);
+
+        // IFD0 with a single entry: Orientation, type SHORT, count 1, value 1.
+        AddUInt16(body, 1, bigEndian);                 // number of entries
+        AddUInt16(body, 0x0112, bigEndian);            // tag: Orientation
+        AddUInt16(body, 3, bigEndian);                 // type: SHORT
+        AddUInt32(body, 1, bigEndian);                 // count
+        AddUInt16(body, 1, bigEndian);                 // value 1, in the first two bytes
+        AddUInt16(body, 0, bigEndian);                 // of the four byte value field
+        AddUInt32(body, 0, bigEndian);                 // no next IFD
+
+        var segment = new List<byte> { 0xFF, 0xE1 };
+        // The length of a JPEG segment is always big-endian, whatever the EXIF block uses.
+        AddUInt16(segment, body.Count + 2, bigEndian: true);
+        segment.AddRange(body);
+        return segment.ToArray();
+    }
+
+    static void AddUInt16(List<byte> bytes, int value, bool bigEndian)
+    {
+        var b = new[] { (byte)(value >> 8), (byte)value };
+        bytes.AddRange(bigEndian ? b : b.Reverse());
+    }
+
+    static void AddUInt32(List<byte> bytes, int value, bool bigEndian)
+    {
+        var b = new[] { (byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value };
+        bytes.AddRange(bigEndian ? b : b.Reverse());
+    }
+
+    /// <summary>
     /// Writes a grayscale JPEG that is black on the left and white on the right.
     /// </summary>
     /// <remarks>
@@ -50,6 +128,14 @@ internal static class TestImages
         using var data = image.Encode(SKEncodedImageFormat.Jpeg, quality);
         using var stream = File.Create(path);
         data.SaveTo(stream);
+    }
+
+    /// <summary>Returns the orientation as an EXIF reader independent of this app's library sees it.</summary>
+    /// <remarks>Used to check that software other than this app honors the written rotation.</remarks>
+    public static SKEncodedOrigin ReadEncodedOrigin(string path)
+    {
+        using var codec = SKCodec.Create(path);
+        return codec.EncodedOrigin;
     }
 
     /// <summary>Hash of the file bytes. Used to tell pages apart.</summary>

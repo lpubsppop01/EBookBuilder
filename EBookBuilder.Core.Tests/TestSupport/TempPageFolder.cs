@@ -34,6 +34,17 @@ public sealed class TempPageFolder : IDisposable
         return folder;
     }
 
+    /// <summary>
+    /// Creates a folder holding one page that already carries a big-endian EXIF block, the way a
+    /// page straight from a scanner does.
+    /// </summary>
+    public static TempPageFolder CreateWithScannedPage(string filename = "0.jpg")
+    {
+        var folder = CreateEmpty();
+        TestImages.WriteTwoToneJpegWithExif(folder.FilePath(filename), 80, 120, bigEndian: true);
+        return folder;
+    }
+
     /// <summary>Creates <paramref name="count"/> pages with serial filenames.</summary>
     /// <param name="makeDistinct">
     /// When true, the pattern is varied per page. Reordering tests need to follow

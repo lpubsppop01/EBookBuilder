@@ -26,13 +26,27 @@ public sealed class TempJpeg : IDisposable
 
     /// <summary>Creates a new temporary JPEG of the specified size.</summary>
     public static TempJpeg Create(int width = 80, int height = 120, int quality = 100)
+        => CreateCore(width, height, quality, exifBigEndian: null);
+
+    /// <summary>
+    /// Creates a new temporary JPEG that already carries an EXIF block, the way a page straight
+    /// from a camera or a scanner does.
+    /// </summary>
+    /// <param name="bigEndian">Byte order of the EXIF block that is already in the file.</param>
+    public static TempJpeg CreateWithExif(bool bigEndian = true, int width = 80, int height = 120, int quality = 100)
+        => CreateCore(width, height, quality, exifBigEndian: bigEndian);
+
+    static TempJpeg CreateCore(int width, int height, int quality, bool? exifBigEndian)
     {
         var directoryPath = System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "ebookbuilder-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directoryPath);
 
         var path = System.IO.Path.Combine(directoryPath, "page.jpg");
-        TestImages.WriteTwoToneJpeg(path, width, height, quality);
+        if (exifBigEndian is { } bigEndian)
+            TestImages.WriteTwoToneJpegWithExif(path, width, height, bigEndian, quality);
+        else
+            TestImages.WriteTwoToneJpeg(path, width, height, quality);
 
         return new TempJpeg(directoryPath, path, (width, height));
     }

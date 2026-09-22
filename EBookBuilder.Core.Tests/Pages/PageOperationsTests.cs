@@ -2,6 +2,7 @@ using Lpubsppop01.EBookBuilder.Core.Exif;
 using Lpubsppop01.EBookBuilder.Core.Imaging;
 using Lpubsppop01.EBookBuilder.Core.Pages;
 using Lpubsppop01.EBookBuilder.Core.Tests.TestSupport;
+using SkiaSharp;
 using static Lpubsppop01.EBookBuilder.Core.Tests.TestSupport.TestImages;
 
 namespace Lpubsppop01.EBookBuilder.Core.Tests.Pages;
@@ -30,6 +31,21 @@ public class PageOperationsTests
         PageOperations.Rotate(folder.Path, "0.jpg", RotationAmount.Deg90);
 
         Assert.Equal(ExifOrientation.Rotate180, ExifOrientationStore.Read(folder.FilePath("0.jpg")));
+    }
+
+    [Fact]
+    public void RotationIsEffectiveOnScannedPages()
+    {
+        // Pages that already carry a big-endian EXIF block used to come back unrotated: the
+        // orientation was written with the wrong EXIF type, which no reader accepts.
+        using var folder = TempPageFolder.CreateWithScannedPage();
+
+        PageOperations.Rotate(folder.Path, "0.jpg", RotationAmount.Deg90);
+        PageOperations.Rotate(folder.Path, "0.jpg", RotationAmount.Deg90);
+
+        var path = folder.FilePath("0.jpg");
+        Assert.Equal(ExifOrientation.Rotate180, ExifOrientationStore.Read(path));
+        Assert.Equal(SKEncodedOrigin.BottomRight, TestImages.ReadEncodedOrigin(path));
     }
 
     [Fact]
