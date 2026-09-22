@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# EBookBuilder launcher, written by install.sh from packaging/ebookbuilder.launcher.in.
+# Run install.sh again instead of editing this file.
+
+set -euo pipefail
+
+PAYLOAD_DIR="@PAYLOAD_DIR@"
+
+# Avalonia takes this as the X11 instance name, so that the window is matched against
+# ebookbuilder.desktop (StartupWMClass) instead of against whatever started it.
+export RESOURCE_NAME=ebookbuilder
+
+# Avalonia has no native Wayland backend, so it needs X11 or XWayland.
+if [ -z "${DISPLAY:-}" ]; then
+    printf 'ebookbuilder: DISPLAY is not set; it needs an X11 or XWayland session.\n' >&2
+    exit 1
+fi
+
+exec "$PAYLOAD_DIR/ebookbuilder" "$@"

@@ -60,6 +60,42 @@ dotnet publish EBookBuilder.App -c Release -r win-x64   --self-contained   # Win
 
 A self-contained build runs on machines where .NET is not installed.
 
+## Install on Linux (user-local)
+
+`install.sh` copies a self-contained build into `~/.local`, so that the app starts without
+`.NET` on `PATH` and appears in the GNOME application list with its own icon.
+Running the script again is the update path: it pulls the source, rebuilds and replaces the
+installed copy.
+
+```sh
+./install.sh              # install, and update from then on
+./install.sh --uninstall  # remove what it installed
+./install.sh --dry-run    # show where everything would go
+```
+
+| Path | Contents |
+| --- | --- |
+| `~/.local/share/ebookbuilder/` | The published application (self-contained, about 110 MB) |
+| `~/.local/bin/ebookbuilder` | Launcher, for a terminal or the application list |
+| `~/.local/share/applications/ebookbuilder.desktop` | Application list entry |
+| `~/.local/share/icons/hicolor/scalable/apps/ebookbuilder.svg` | Icon |
+
+Options:
+
+- `--prefix DIR` installs under `DIR` instead of `~/.local`.
+- `--no-pull` builds the current checkout without running `git pull`. The update is also
+  skipped, with a warning, when the working tree has local changes or the pull fails.
+- `--uninstall` removes the four paths above. `~/.config/EBookBuilder/settings.json` is kept.
+
+The build is `dotnet publish -c Release --self-contained` for the RID that `uname -m` implies,
+so nothing needs to be installed for the app to run, not even .NET. `dotnet` is needed only to
+build it, and is looked up on `PATH` and then at `~/.dotnet/dotnet` (with `DOTNET_ROOT` set for
+the build) rather than by sourcing `~/.profile`.
+
+A folder passed on the command line is opened at startup (`ebookbuilder ~/scans`), so the entry
+is also registered as a folder handler: "Open With" in the file manager offers EBookBuilder for
+a folder. It is not made the default handler.
+
 ## Command line
 
 A CLI is included for doing the same work without opening the GUI.
