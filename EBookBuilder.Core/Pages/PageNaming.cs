@@ -4,8 +4,9 @@ namespace Lpubsppop01.EBookBuilder.Core.Pages;
 /// Serial number rules for page filenames.
 /// </summary>
 /// <remarks>
-/// Serial numbers are used to guarantee that "page order = ordinal order of the filenames".
+/// Serial numbers are used to guarantee that "page order = the order of the filenames".
 /// The number of digits is derived from the count, so 10 pages give <c>00.jpg</c> to <c>09.jpg</c>.
+/// One fixed digit count keeps the numeric order and the ordinal order the same.
 /// </remarks>
 public static class PageNaming
 {

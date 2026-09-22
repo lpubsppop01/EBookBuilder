@@ -15,7 +15,9 @@ The version before the port can be taken from the `wpf-final` tag.
   (`DCTDecode`), so nothing is re-encoded and the file comes out about the same size as the CBZ.
   Rotation is written as the placement of the page rather than into the pixels, so a rotated page is not re-encoded either.
   The pages are written in page order, and no third-party PDF library is involved, so the same pages always produce the same file.
-- **Page order is reliable.** Pages are sorted in the ordinal order of their file names, and the CBZ entries are written in that order.
+- **Page order is reliable.** Pages are sorted in the natural order of their file names, where a run of digits in a name
+  is compared as a number, so `... - 2.jpg` comes before `... - 10.jpg` and `... - 100.jpg` comes after both.
+  The CBZ entries are written in that order, and so are the PDF pages.
 - Checking while looking at the preview, checking odd/even pages in bulk,
   and per-page duplication, move to end, deletion and cropping.
   Deletion and cropping apply to every checked page at once.
@@ -115,7 +117,9 @@ Deliberate differences from the original WPF version.
   The original upscaled. For the purpose of shrinking scanned images for e-books, upscaling is meaningless.
 - **Page order does not depend on the file system.** The original used the order returned by `Directory.EnumerateFiles`
   as it was, implicitly depending on NTFS returning names in order.
-  On file systems such as ext4 the order is undefined and pages get swapped. The pages are now sorted explicitly.
+  On file systems such as ext4 the order is undefined and pages get swapped. The pages are now sorted explicitly,
+  in the natural order of the names: a number in a name is compared as a number, so a folder numbered 1 to 102
+  without zero padding is listed and built in numerical order rather than as 1, 10, 100, 101, 102, 11, … .
 - **The CBZ entry order is fixed to the page order.** The original built the archive by walking the directory, so
   the order inside the archive was undefined. Readers that read in archive order swap the pages.
 - **Settings are remembered.** In addition to the window position, the build settings and the last opened folder are saved.

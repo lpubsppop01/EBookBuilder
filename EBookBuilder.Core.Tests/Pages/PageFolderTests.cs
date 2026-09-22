@@ -7,7 +7,7 @@ namespace Lpubsppop01.EBookBuilder.Core.Tests.Pages;
 public class PageFolderTests
 {
     [Fact]
-    public void SerialPagesAreReturnedInOrdinalOrder()
+    public void SerialPagesAreReturnedInPageOrder()
     {
         using var folder = TempPageFolder.CreateWithPages("00.jpg", "01.jpg", "02.jpg");
         Assert.Equal(["00.jpg", "01.jpg", "02.jpg"], folder.EnumerateFilenames());
@@ -22,7 +22,7 @@ public class PageFolderTests
         // The creation order is deliberately different from the name order, to confirm that the sorting takes effect.
         using var folder = TempPageFolder.CreateWithPages("10.jpg", "2.jpg", "1.jpg", "9.jpg");
 
-        Assert.Equal(["1.jpg", "10.jpg", "2.jpg", "9.jpg"], folder.EnumerateFilenames());
+        Assert.Equal(["1.jpg", "2.jpg", "9.jpg", "10.jpg"], folder.EnumerateFilenames());
     }
 
     [Fact]
@@ -31,6 +31,21 @@ public class PageFolderTests
         using var folder = TempPageFolder.CreateWithPages("009.jpg", "010.jpg", "001.jpg");
 
         Assert.Equal(["001.jpg", "009.jpg", "010.jpg"], folder.EnumerateFilenames());
+    }
+
+    [Fact]
+    public void NumbersThatAreNotZeroPaddedAreSortedAsNumbers()
+    {
+        // The shape a scanner produces when it numbers pages without padding, which is what a page
+        // folder from a real book looks like. Ordinal comparison would put " - 10.jpg" before
+        // " - 9.jpg" and " - 100.jpg" before " - 11.jpg", and the built book would follow that order.
+        const string prefix = "ページ - ";
+        var numbers = new[] { 1, 2, 9, 10, 11, 99, 100, 101, 102 };
+        using var folder = TempPageFolder.CreateWithPages(
+            numbers.Reverse().Select(number => $"{prefix}{number}.jpg").ToArray());
+
+        var expected = numbers.Select(number => $"{prefix}{number}.jpg").ToArray();
+        Assert.Equal(expected, folder.EnumerateFilenames());
     }
 
     [Fact]
