@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <title>EBookBuilder</title>
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#207a75"/>
+      <stop offset="1" stop-color="#14504e"/>
+    </linearGradient>
+  </defs>
+  <!-- The tile, so that the icon holds together on any background. -->
+  <rect x="16" y="16" width="224" height="224" rx="52" fill="url(#tile)"/>
+  <!-- Two sheets, the back one peeking out at the top right, for a stack of pages. -->
+  <rect x="96" y="52" width="112" height="120" rx="12" fill="#8fcbc6"/>
+  <rect x="48" y="84" width="120" height="120" rx="12" fill="#ffffff"/>
+  <!-- Three bars stand for the text on the page; they are kept thick enough to survive 16px. -->
+  <g fill="#1f6f6b">
+    <rect x="68" y="112" width="80" height="12" rx="6"/>
+    <rect x="68" y="138" width="64" height="12" rx="6"/>
+    <rect x="68" y="164" width="72" height="12" rx="6"/>
+  </g>
+</svg>

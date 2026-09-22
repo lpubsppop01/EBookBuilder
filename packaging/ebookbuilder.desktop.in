@@ -1,0 +1,17 @@
+[Desktop Entry]
+Type=Application
+Name=EBookBuilder
+GenericName=Scanned Book Builder
+GenericName[ja]=電子書籍ビルダー
+Comment=Rotate, crop and rename scanned pages, then write them out as a CBZ or a PDF
+Comment[ja]=スキャンしたページ画像を回転・切り抜き・連番リネームして CBZ / PDF に書き出します
+Exec=@BIN@ %f
+TryExec=@BIN@
+Icon=@ICON@
+Terminal=false
+Categories=Graphics;
+MimeType=inode/directory;
+Keywords=ebook;cbz;pdf;scan;comic;
+Keywords[ja]=電子書籍;コミック;スキャン;ページ;
+StartupNotify=true
+StartupWMClass=ebookbuilder
